@@ -1,42 +1,49 @@
 import warnings
+
+import httpx
 from pydantic import BaseModel
 from pydantic.functional_validators import field_validator
-import httpx
 
-from src.api_handler.models.session import SessionSubType
-from src.api_handler.models.year import Year
 from src.api_handler.models.meeting import Meeting
+from src.api_handler.models.season import Season
+from src.api_handler.models.session import SessionSubType
 
-class UrlBuilder(BaseModel):
-    _scheme: str = 'https'
+
+class PathResolver(BaseModel):
+    _scheme: str = "https"
     _domain: str = "livetiming.formula1.com/static"
     _slug: str = "https://livetiming.formula1.com/static"
     year: int | None = None
     meeting: str | None = None
     session: str | None = None
     file: str | None = None
-    
+
     @field_validator("year", mode="before")
     @classmethod
-    def validate_year(cls, value: int):
-        if value < 2018 or value > 2026: 
-            raise ValueError(f"year must be between 2018 and 2026 (inclusive). Gave: {value}")
+    def validate_year(cls, value: int) -> int:
+        if value < 2018 or value > 2026:
+            raise ValueError(
+                f"year must be between 2018 and 2026 (inclusive). Gave: {value}"
+            )
         return value
-    
+
     # TODO: Validate meetings via list of meetings from given year
-    # Need to model the year/Index.json response   
-    #@field_validator("meeting", mode="after")
-    
-    def with_year(self, year: int) -> "UrlBuilder":
+    # Need to model the year/Index.json response
+    # @field_validator("meeting", mode="after")
+
+    def with_year(self, year: int) -> "PathResolver":
         self.year = year
         return self
-    def with_meeting(self, meeting: str) -> "UrlBuilder":
+
+    def with_meeting(self, meeting: str) -> "PathResolver":
         self.meeting = meeting
         return self
-    def with_session(self, session: SessionSubType) -> "UrlBuilder":
+
+    def with_session(self, session: SessionSubType) -> "PathResolver":
         self.session = session
         return self
-    def with_file(self, file: str) -> "UrlBuilder":
+
+    def with_file(self, file: str) -> "PathResolver":
         self.file = file
         return self
 
@@ -44,7 +51,7 @@ class UrlBuilder(BaseModel):
         if self.year is None:
             raise ValueError("year required to get meeting")
         response = httpx.get("/".join([self._slug, str(self.year), "Index.json"]))
-        year_info = Year.model_validate(response.json())
+        year_info = Season.model_validate(response.json())
         meeting_instance = year_info.get_meeting(meeting)
         return meeting_instance
 
@@ -73,14 +80,12 @@ class UrlBuilder(BaseModel):
                 elif s in ["r", "race"]:
                     url += "/" + meeting.race.folder_name
         if self.meeting is None and self.session is not None:
-            warnings.warn("Attempted to build url with session, without specifying meeting")
+            warnings.warn(
+                "Attempted to build url with session, without specifying meeting",
+                stacklevel=2,
+            )
         if self.file:
             url += "/" + self.file
         if self.file is None:
             url += "/" + "Index.json"
         return url
-
-    def execute(self):
-        response = httpx.get(self.url)
-        year_info = Year.model_validate(response.json())
-        return year_info

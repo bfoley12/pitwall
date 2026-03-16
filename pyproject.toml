@@ -8,4 +8,46 @@ dependencies = [
     "fastf1>=3.8.1",
     "httpx>=0.28.1",
     "pydantic>=2.12.5",
+    "typer>=0.24.1",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.6",
+]
+
+[project.scripts]
+pitwall = "f1_stats.main:app"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "SIM",   # flake8-simplify
+    "PTH",   # flake8-use-pathlib
+    "RUF",   # ruff-specific rules
+    "ANN",   # type annotations
+#    "D",     # docstring conventions
+]
+ignore = [
+    "E501",  # line length (handled by formatter)
+    "D203",  # use D211 (no blank line before class)
+    "D213",  # use D212 (summary on first line)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["f1_stats"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true

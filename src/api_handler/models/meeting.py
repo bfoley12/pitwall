@@ -1,8 +1,12 @@
-from typing import override
-from pydantic import BaseModel, Field
 from datetime import datetime
-from .country import Country
+from typing import override
+
+from pydantic import Field, model_validator
+
+from src.api_handler.models.base import F1Model
+
 from .circuit import Circuit
+from .country import Country
 from .session import Session
 
 SESSION_KEYS = {
@@ -11,11 +15,11 @@ SESSION_KEYS = {
     "Practice 3": "FP3",
     "Qualifying": "Q",
     "Sprint Shootout": "SQ",
-    "Race": "Race"
+    "Race": "Race",
 }
 
 
-class Meeting(BaseModel):
+class Meeting(F1Model):
     key: int = Field(alias="Key")
     code: str = Field(alias="Code")
     number: int = Field(alias="Number")
@@ -25,15 +29,20 @@ class Meeting(BaseModel):
     country: Country = Field(alias="Country")
     circuit: Circuit = Field(alias="Circuit")
     sessions: list[Session] = Field(alias="Sessions")
-    
+
+    @model_validator(mode="after")
+    def sort_sessions(self) -> "Meeting":
+        self.sessions.sort(key=lambda s: s.start_date)
+        return self
+
     @property
     def fp1(self) -> Session:
         return self._by_type("Practice 1")
-    
+
     @property
     def fp2(self) -> Session:
         return self._by_type("Practice 2")
-        
+
     @property
     def fp3(self) -> Session:
         return self._by_type("Practice 3")
@@ -41,11 +50,11 @@ class Meeting(BaseModel):
     @property
     def q(self) -> Session:
         return self._by_type("Qualifying")
-        
+
     @property
     def sq(self) -> Session:
         return self._by_type("Sprint Shootout")
-        
+
     @property
     def sprint(self) -> Session:
         return self._by_type("Sprint")
@@ -55,29 +64,35 @@ class Meeting(BaseModel):
         return self._by_type("Race")
 
     def _by_type(self, name: str) -> Session:
-        value = next((s for s in self.sessions if s.sub_type is not None and s.sub_type.value == name), None)
+        value = next(
+            (
+                s
+                for s in self.sessions
+                if s.sub_type is not None and s.sub_type.value == name
+            ),
+            None,
+        )
         if value is None:
             raise ValueError(f"No {name} found for {self.name}")
         return value
-    
+
     @property
     def weekend_start_datetime(self) -> datetime:
-        return self.fp1.start_date
-        
-    # TODO: sort sessions by time and select the last one to avoid looking for a race during pre-season testing
+        return self.sessions[0].start_date
+
     @property
     def weekend_end_datetime(self) -> datetime:
-        return self.race.end_date
-        
+        return self.sessions[-1].end_date
+
     @property
     def folder_name(self) -> str:
         path = next((s.path for s in self.sessions if s.path is not None), None)
         if path is None:
             raise ValueError("No sessions available")
         return path.split("/")[1]
-        
+
     @override
-    def __str__(self):
+    def __str__(self) -> str:
         res = f"{self.name} ({self.weekend_start_datetime} - {self.weekend_end_datetime})\n\t"
         session_str = ", ".join([str(s.sub_type) for s in self.sessions])
         res += f"[{session_str}]"

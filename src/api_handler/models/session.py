@@ -1,17 +1,20 @@
-from typing import ClassVar, override
 from datetime import datetime, timedelta
-from enum import Enum
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from enum import StrEnum
+from typing import ClassVar, override
+
+from pydantic import ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_pascal
 
+from src.api_handler.models.base import F1Model
 
-class SessionType(str, Enum):
+
+class SessionType(StrEnum):
     PRACTICE = "Practice"
     QUALIFYING = "Qualifying"
     RACE = "Race"
 
 
-class SessionSubType(str, Enum):
+class SessionSubType(StrEnum):
     PRACTICE_1 = "Practice 1"
     PRACTICE_2 = "Practice 2"
     PRACTICE_3 = "Practice 3"
@@ -25,8 +28,10 @@ class SessionSubType(str, Enum):
         return self.value
 
 
-class Session(BaseModel):
-    model_config: ClassVar[ConfigDict] = ConfigDict(populate_by_name=True, alias_generator=to_pascal)
+class Session(F1Model):
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
 
     key: int
     type: SessionType | None

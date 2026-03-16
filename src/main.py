@@ -1,17 +1,20 @@
-from .api_handler import UrlBuilder
-import argparse
+import typer
 
-def main():
-    parser = argparse.ArgumentParser(description="F1 Stats")
-    parser.add_argument("--year", type=int, default=2023)
-    parser.add_argument("--session", type=str, default=None)
-    parser.add_argument("--file", type=str, default=None)
-    parser.add_argument("--meeting", type=str, default=None)
-    args = parser.parse_args()
-    
-    session = UrlBuilder().with_year(args.year).with_session(args.session).with_file(args.file).with_meeting(args.meeting).execute()
-    print(session)
+from .api_handler.f1_client import F1Client
+
+app = typer.Typer()
+
+
+@app.command()
+def main(
+    year: int = 2023,
+    session: str | None = None,
+    file: str | None = None,
+    meeting: str | None = None,
+) -> None:
+    value = F1Client().get_season(year=year)
+    print(value)
 
 
 if __name__ == "__main__":
-    main()
+    app()

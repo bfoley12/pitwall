@@ -1,2 +1,3 @@
-from .models import *
-from .url_builder import UrlBuilder
+from .f1_client import F1Client
+
+__all__ = ["F1Client"]

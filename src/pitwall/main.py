@@ -73,19 +73,48 @@ def position_data(
     meeting: str = DEFAULTS.meeting,
     session: str = DEFAULTS.session,
 ) -> None:
-    print(client.get_position_data(
-        year=year, meeting=meeting, session=SessionSubType.parse(session)
-    ))
+    print(
+        client.get_position_data(
+            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        )
+    )
+
 
 @app.command()
 def driver_info(
     year: int = DEFAULTS.year,
     meeting: str = DEFAULTS.meeting,
     session: str = DEFAULTS.session,
-):
-    print(client.get_driver_info(
-        year=year, meeting=meeting, session=SessionSubType.parse(session)
-    ))
+) -> None:
+    print(
+        client.get_driver_info(
+            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        )
+    )
+
+@app.command()
+def weather_data(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    print(
+        client.get_weather_data(
+            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        )
+    )
+    
+@app.command()
+def weather_data_series(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    print(
+        client.get_weather_data_series(
+            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        )
+    )
 
 if __name__ == "__main__":
     app()

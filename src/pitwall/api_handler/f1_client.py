@@ -2,9 +2,11 @@ import base64
 import json
 import zlib
 from typing import Any, cast
+from dataclasses import dataclass
 
 import httpx
 import polars as pl
+from pydantic_core.core_schema import NoneSchema
 
 from pitwall.api_handler.models.base import F1Model, F1ModelT
 from pitwall.api_handler.models.driver_list import DriverList
@@ -12,7 +14,9 @@ from pitwall.api_handler.models.meeting import Meeting
 from pitwall.api_handler.models.season import Season
 from pitwall.api_handler.models.session import SessionFeeds, SessionSubType
 from pitwall.api_handler.models.timing_data import TimingDataF1
+from pitwall.api_handler.models.weather_data import WeatherData
 from pitwall.api_handler.path_resolver import PathResolver
+
 
 class F1Client:
     def __init__(self) -> None:
@@ -42,7 +46,7 @@ class F1Client:
             session=session,
             file="TimingDataF1.json",
         )
-        
+
     def get_driver_info(
         self, year: int, meeting: str, session: SessionSubType
     ) -> DriverList:
@@ -51,7 +55,7 @@ class F1Client:
             year=year,
             meeting=meeting,
             session=session,
-            file="DriverList.json"
+            file="DriverList.json",
         )
 
     def get_car_data(
@@ -88,7 +92,10 @@ class F1Client:
         data = cast(
             dict[str, Any],
             self._fetch_raw(
-                year=year, meeting=meeting, session=session, file="Position.z.jsonStream"
+                year=year,
+                meeting=meeting,
+                session=session,
+                file="Position.z.jsonStream",
             ),
         )
         rows = [
@@ -102,6 +109,38 @@ class F1Client:
             }
             for pos in data["Position"]
             for car_num, entry in pos["Entries"].items()
+        ]
+        return pl.DataFrame(rows).with_columns(
+            pl.col("timestamp").str.to_datetime("%Y-%m-%dT%H:%M:%S%.fZ")
+        )
+
+    def get_weather_data(
+        self, year: int, meeting: str, session: SessionSubType
+    ) -> WeatherData:
+        return self.fetch(model=WeatherData, year=year, meeting=meeting, session=session, file="WeatherData.json",)
+
+    def get_weather_data_series(
+        self, year: int, meeting: str, session: SessionSubType
+    ) -> pl.DataFrame:
+        data = data = cast(
+            dict[str, Any],
+            self._fetch_raw(
+                year=year,
+                meeting=meeting,
+                session=session,
+                file="WeatherDataSeries.json",
+            ),
+        )
+        rows = [
+            {
+                "timestamp": ser["Timestamp"],
+                "air_temp": ser["Weather"].get("AirTemp"),
+                "humidity": ser["Weather"].get("Humidity"),
+                "pressure": ser["Weather"].get("Pressure"),
+                "rainfall": ser["Weather"].get("Rainfall"),
+                "track_temp": ser["Weather"].get("TrackTemp"),
+            }
+            for ser in data["Series"]
         ]
         return pl.DataFrame(rows).with_columns(
             pl.col("timestamp").str.to_datetime("%Y-%m-%dT%H:%M:%S%.fZ")

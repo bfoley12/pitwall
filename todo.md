@@ -3,7 +3,6 @@
 - TrackStatus
 - Content Streams
 - ChampionshipPrediction
-- **DriverList
 - DriverTracker
 - TimingStats
 - AudioStreams
@@ -17,8 +16,6 @@
 - LapSeries
 - TopThree
 - Heartbeat
-- **WeatherData
-- **?WeatherDataSeries
 - TlaRcm
 - RaceControlMessages
 - OvertakeSeries

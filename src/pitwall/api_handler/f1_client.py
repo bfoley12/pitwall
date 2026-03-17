@@ -71,6 +71,31 @@ class F1Client:
             pl.col("utc").str.to_datetime("%Y-%m-%dT%H:%M:%S%.fZ")
         )
 
+    def get_position_data(
+        self, year: int, meeting: str, session: SessionSubType
+    ) -> pl.DataFrame:
+        data = cast(
+            dict[str, Any],
+            self._fetch_raw(
+                year=year, meeting=meeting, session=session, file="Position.z.jsonStream"
+            ),
+        )
+        rows = [
+            {
+                "timestamp": pos["Timestamp"],
+                "car_number": car_num,
+                "status": entry["Status"],
+                "x": entry["X"],
+                "y": entry["Y"],
+                "z": entry["Z"],
+            }
+            for pos in data["Position"]
+            for car_num, entry in pos["Entries"].items()
+        ]
+        return pl.DataFrame(rows).with_columns(
+            pl.col("timestamp").str.to_datetime("%Y-%m-%dT%H:%M:%S%.fZ")
+        )
+
     def get_file(
         self, year: int, meeting: str, session: SessionSubType, file: str
     ) -> F1Model:
@@ -88,7 +113,7 @@ class F1Client:
         url = PathResolver(year=year, meeting=meeting, session=session, file=file).url
         response = self.http.get(url)
         _ = response.raise_for_status()
-        return self._decode_response(response, file)
+        return self._decode_compressed_stream(response.text)
 
     def fetch(
         self,
@@ -102,35 +127,20 @@ class F1Client:
         response = self.http.get(url)
         _ = response.raise_for_status()
 
-        data = self._decode_response(response, file)
+        data = self._decode_compressed_stream(response.text)
         return model.model_validate(data)
 
-    def _decode_response(self, response: httpx.Response, file: str) -> object:
-        text = response.text.lstrip("\ufeff")
-
-        if not file.endswith(".jsonStream"):
-            if ".z." in file:
-                raw = json.loads(text)
-                decoded = base64.b64decode(raw + "==")
-                decompressed = zlib.decompress(decoded, -zlib.MAX_WBITS)
-                return json.loads(decompressed)
-            return json.loads(text)
-
-        # jsonStream: each line is timestamp + payload
-        entries: list[object] = []
+    def _decode_compressed_stream(self, text: str) -> dict[str, list[object]]:
+        collected: dict[str, list[object]] = {}
         for line in text.strip().split("\n"):
             if not line:
                 continue
             quote_idx = line.index('"')
             blob = line[quote_idx:].strip('"')
-
-            if ".z." in file:
-                decoded = base64.b64decode(blob + "==")
-                decompressed = zlib.decompress(decoded, -zlib.MAX_WBITS)
-                parsed = json.loads(decompressed)
-                if "Entries" in parsed:
-                    entries.extend(parsed["Entries"])
-            else:
-                entries.append(json.loads(blob))
-
-        return {"Entries": entries} if ".z." in file else entries
+            decoded = base64.b64decode(blob + "==")
+            decompressed = zlib.decompress(decoded, -zlib.MAX_WBITS)
+            parsed = json.loads(decompressed)
+            for key, values in parsed.items():
+                if isinstance(values, list):
+                    collected.setdefault(key, []).extend(values)
+        return collected

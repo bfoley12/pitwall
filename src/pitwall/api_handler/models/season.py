@@ -16,19 +16,39 @@ class Season(F1Model):
         self.meetings.sort(key=lambda m: m.number)
         return self
 
-    def get_meeting(self, location: str) -> Meeting:
-        location = location.replace(" ", "_").lower()
-        result = next(
-            (
-                m
-                for m in self.meetings
-                if m.location.replace(" ", "_").lower() == location
-            ),
-            None,
+    def get_meeting(self, query: str) -> Meeting:
+        q = query.strip().casefold()
+        matches: list[Meeting] = []
+        for meeting in self.meetings:
+            candidates = [
+                meeting.name,
+                meeting.location,
+                meeting.circuit.short_name,
+                meeting.country.name,
+            ]
+            if any(q in c.casefold() for c in candidates):
+                matches.append(meeting)
+
+        if not matches:
+            available = [f"{m.name} ({m.location})" for m in self.meetings]
+            raise ValueError(
+                f"No meeting matching {query!r}. Available:\n"
+                + "\n".join(f"  - {a}" for a in available)
+            )
+
+        if len(matches) == 1:
+            return matches[0]
+
+        # Prefer actual race weekends over testing
+        races = [m for m in matches if "testing" not in m.name.casefold()]
+        if len(races) == 1:
+            return races[0]
+
+        ambiguous = [f"{m.name} ({m.location})" for m in matches]
+        raise ValueError(
+            f"Ambiguous match for {query!r}. Did you mean:\n"
+            + "\n".join(f"  - {a}" for a in ambiguous)
         )
-        if result is None:
-            raise ValueError(f"No meeting found for location: {location}")
-        return result
 
     @override
     def __str__(self) -> str:

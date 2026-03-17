@@ -27,8 +27,6 @@ def _normalize_session_name(v: object) -> object:
     return v.strip()
 
 
-
-
 class SessionType(StrEnum):
     PRACTICE = "Practice"
     QUALIFYING = "Qualifying"
@@ -68,9 +66,11 @@ class SessionSubType(StrEnum):
             ) from None
         return result
 
+
 SessionSubTypeField = Annotated[
     SessionSubType, BeforeValidator(_normalize_session_name)
 ]
+
 
 class Session(F1Model):
     model_config: ClassVar[ConfigDict] = ConfigDict(

@@ -7,12 +7,12 @@ import httpx
 import polars as pl
 
 from pitwall.api_handler.models.base import F1Model, F1ModelT
+from pitwall.api_handler.models.driver_list import DriverList
 from pitwall.api_handler.models.meeting import Meeting
 from pitwall.api_handler.models.season import Season
 from pitwall.api_handler.models.session import SessionFeeds, SessionSubType
 from pitwall.api_handler.models.timing_data import TimingDataF1
 from pitwall.api_handler.path_resolver import PathResolver
-
 
 class F1Client:
     def __init__(self) -> None:
@@ -41,6 +41,17 @@ class F1Client:
             meeting=meeting,
             session=session,
             file="TimingDataF1.json",
+        )
+        
+    def get_driver_info(
+        self, year: int, meeting: str, session: SessionSubType
+    ) -> DriverList:
+        return self.fetch(
+            model=DriverList,
+            year=year,
+            meeting=meeting,
+            session=session,
+            file="DriverList.json"
         )
 
     def get_car_data(
@@ -103,18 +114,6 @@ class F1Client:
             model=F1Model, year=year, meeting=meeting, session=session, file=file
         )
 
-    def _fetch_raw(
-        self,
-        year: int | None = None,
-        meeting: str | None = None,
-        session: SessionSubType | None = None,
-        file: str = "Index.json",
-    ) -> object:
-        url = PathResolver(year=year, meeting=meeting, session=session, file=file).url
-        response = self.http.get(url)
-        _ = response.raise_for_status()
-        return self._decode_compressed_stream(response.text.lstrip("\ufeff"))
-
     def fetch(
         self,
         model: type[F1ModelT],
@@ -126,9 +125,44 @@ class F1Client:
         url = PathResolver(year=year, meeting=meeting, session=session, file=file).url
         response = self.http.get(url)
         _ = response.raise_for_status()
-
-        data = self._decode_compressed_stream(response.text.lstrip("\ufeff"))
+        data = self._decode_response(response, file)
         return model.model_validate(data)
+
+    def _fetch_raw(
+        self,
+        year: int | None = None,
+        meeting: str | None = None,
+        session: SessionSubType | None = None,
+        file: str = "Index.json",
+    ) -> object:
+        url = PathResolver(year=year, meeting=meeting, session=session, file=file).url
+        response = self.http.get(url)
+        _ = response.raise_for_status()
+        return self._decode_response(response, file)
+
+    def _decode_response(self, response: httpx.Response, file: str) -> object:
+        text = response.text.lstrip("\ufeff")
+
+        if file.endswith(".z.jsonStream"):
+            return self._decode_compressed_stream(text)
+
+        if file.endswith(".jsonStream"):
+            entries: list[object] = []
+            for line in text.strip().split("\n"):
+                if not line:
+                    continue
+                quote_idx = line.index('"')
+                blob = line[quote_idx:].strip('"')
+                entries.append(json.loads(blob))
+            return entries
+
+        if ".z." in file:
+            raw = json.loads(text)
+            decoded = base64.b64decode(raw + "==")
+            decompressed = zlib.decompress(decoded, -zlib.MAX_WBITS)
+            return json.loads(decompressed)
+
+        return json.loads(text)
 
     def _decode_compressed_stream(self, text: str) -> dict[str, list[object]]:
         collected: dict[str, list[object]] = {}

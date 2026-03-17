@@ -7,6 +7,7 @@ from pitwall.api_handler.models.session import SessionSubType
 
 app = typer.Typer()
 
+
 @dataclass(frozen=True)
 class Defaults:
     year: int = 2023
@@ -16,6 +17,7 @@ class Defaults:
 
 DEFAULTS = Defaults()
 client = F1Client()
+
 
 @app.command()
 def season(year: int = DEFAULTS.year) -> None:
@@ -28,25 +30,62 @@ def meeting(year: int = DEFAULTS.year, name: str = DEFAULTS.meeting) -> None:
 
 
 @app.command()
-def session(year: int = DEFAULTS.year, meeting: str = DEFAULTS.meeting, name: str = DEFAULTS.session) -> None:
-    print(client.get_session(year=year, meeting=meeting, session=SessionSubType.parse(name)))
+def session(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    name: str = DEFAULTS.session,
+) -> None:
+    print(
+        client.get_session(
+            year=year, meeting=meeting, session=SessionSubType.parse(name)
+        )
+    )
 
 
 @app.command()
-def timing(year: int = DEFAULTS.year, meeting: str = DEFAULTS.meeting, session: str = DEFAULTS.session) -> None:
-    print(client.get_timing(year=year, meeting=meeting, session=SessionSubType.parse(session)))
+def timing(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    print(
+        client.get_timing(
+            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        )
+    )
 
 
 @app.command()
-def car_data(year: int = DEFAULTS.year, meeting: str = DEFAULTS.meeting, session: str = DEFAULTS.session) -> None:
-    df = client.get_car_data(year=year, meeting=meeting, session=SessionSubType.parse(session))
+def car_data(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get_car_data(
+        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    )
     print(df)
 
-@app.command()
-def position_data(year: int = DEFAULTS.year, meeting: str = DEFAULTS.meeting, session: str = DEFAULTS.session) -> None:
-    df = client.get_position_data(year=year, meeting=meeting, session=SessionSubType.parse(session))
-    print(df)
 
+@app.command()
+def position_data(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    print(client.get_position_data(
+        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    ))
+
+@app.command()
+def driver_info(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+):
+    print(client.get_driver_info(
+        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    ))
 
 if __name__ == "__main__":
     app()

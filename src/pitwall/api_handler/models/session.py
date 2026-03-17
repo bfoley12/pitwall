@@ -28,6 +28,17 @@ class SessionSubType(StrEnum):
     @override
     def __str__(self) -> str:
         return self.value
+    @classmethod
+    def parse(cls, value: str) -> SessionSubType:
+        cleaned = value.strip()
+        lookup = {m.value.casefold(): m for m in cls}
+        result = lookup.get(cleaned.casefold())
+        if result is None:
+            valid = ", ".join(m.value for m in cls)
+            raise ValueError(
+                f"Unknown session type: {value!r}. Valid options: {valid}"
+            ) from None
+        return result
 
 
 class Session(F1Model):

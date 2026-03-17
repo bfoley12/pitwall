@@ -156,6 +156,17 @@ def get_rcm(
         )
     )
 
+@app.command()
+def track_status(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get_track_status(
+        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    )
+    print(df)
+
 
 if __name__ == "__main__":
     app()

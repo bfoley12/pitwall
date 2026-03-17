@@ -202,6 +202,23 @@ class F1Client:
             file="RaceControlMessages.json",
         )
 
+    def get_track_status(self, year: int, meeting: str, session: SessionSubType) -> pl.DataFrame:
+        data = cast(
+            list[Any],
+            self._fetch_raw(
+                year=year, meeting=meeting, session=session, file="TrackStatus.jsonStream"
+            ),
+        )
+        rows = [
+            {
+                "timestamp": entry["Timestamp"],
+                "status": entry["Data"]["Status"],
+                "message": entry["Data"]["Message"],
+            }
+            for entry in data
+        ]
+        return pl.DataFrame(rows)
+
     def get_file(
         self, year: int, meeting: str, session: SessionSubType, file: str
     ) -> F1Model:
@@ -246,9 +263,10 @@ class F1Client:
             for line in text.strip().split("\n"):
                 if not line:
                     continue
-                quote_idx = line.index('"')
-                blob = line[quote_idx:].strip('"')
-                entries.append(json.loads(blob))
+                brace_idx = line.index("{")
+                timestamp = line[:brace_idx]
+                payload = json.loads(line[brace_idx:])
+                entries.append({"Timestamp": timestamp, "Data": payload})
             return entries
 
         if ".z." in file:

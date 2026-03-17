@@ -32,7 +32,9 @@ class F1Client:
             model=SessionFeeds, year=year, meeting=meeting, session=session
         )
 
-    def get_timing(self, year: int, meeting: str, session: SessionSubType) -> TimingDataF1:
+    def get_timing(
+        self, year: int, meeting: str, session: SessionSubType
+    ) -> TimingDataF1:
         return self.fetch(
             model=TimingDataF1,
             year=year,
@@ -41,23 +43,25 @@ class F1Client:
             file="TimingDataF1.json",
         )
 
-    def get_car_data(self, year: int, meeting: str, session: SessionSubType) -> pl.DataFrame:
+    def get_car_data(
+        self, year: int, meeting: str, session: SessionSubType
+    ) -> pl.DataFrame:
         data = cast(
-                dict[str, Any],
-                self._fetch_raw(
-                    year=year, meeting=meeting, session=session, file="CarData.z.jsonStream"
-                ),
-            )
+            dict[str, Any],
+            self._fetch_raw(
+                year=year, meeting=meeting, session=session, file="CarData.z.jsonStream"
+            ),
+        )
         rows = [
             {
                 "utc": entry["Utc"],
                 "car_number": car_num,
-                "rpm": ch["0"],
-                "speed": ch["2"],
-                "gear": ch["3"],
-                "throttle": ch["4"],
-                "brake": ch["5"],
-                "drs": ch["45"],
+                "rpm": ch.get("0", 0),
+                "speed": ch.get("2", 0),
+                "gear": ch.get("3", 0),
+                "throttle": ch.get("4", 0),
+                "brake": ch.get("5", 0),
+                "drs": ch.get("45"),
             }
             for entry in data["Entries"]
             for car_num, car in entry["Cars"].items()

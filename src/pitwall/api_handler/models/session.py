@@ -2,18 +2,45 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from enum import StrEnum
-from typing import ClassVar, cast, override
+from typing import Annotated, ClassVar, cast, override
 
-from pydantic import ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 from pydantic.alias_generators import to_pascal
 
 from pitwall.api_handler.models.base import F1Model
+
+
+def _normalize_session_name(v: object) -> object:
+    if not isinstance(v, str):
+        return v
+    key = v.strip().casefold()
+    aliased = _SESSION_ALIASES.get(key, key)
+    for member in SessionSubType:
+        if member.value.casefold() == aliased:
+            return member.value
+    return v.strip()
+
+
 
 
 class SessionType(StrEnum):
     PRACTICE = "Practice"
     QUALIFYING = "Qualifying"
     RACE = "Race"
+
+
+_SESSION_ALIASES: dict[str, str] = {
+    "sprint qualifying": "sprint shootout",
+    "day 1": "practice 1",
+    "day 2": "practice 2",
+    "day 3": "practice 3",
+}
 
 
 class SessionSubType(StrEnum):
@@ -31,7 +58,7 @@ class SessionSubType(StrEnum):
 
     @classmethod
     def parse(cls, value: str) -> SessionSubType:
-        cleaned = value.strip()
+        cleaned = _SESSION_ALIASES.get(value.strip().casefold(), value.strip())
         lookup = {m.value.casefold(): m for m in cls}
         result = lookup.get(cleaned.casefold())
         if result is None:
@@ -41,6 +68,9 @@ class SessionSubType(StrEnum):
             ) from None
         return result
 
+SessionSubTypeField = Annotated[
+    SessionSubType, BeforeValidator(_normalize_session_name)
+]
 
 class Session(F1Model):
     model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -50,7 +80,7 @@ class Session(F1Model):
     key: int
     type: SessionType | None
     number: int | None = None
-    sub_type: SessionSubType | None = Field(alias="Name", default=None)
+    sub_type: SessionSubTypeField | None = Field(alias="Name", default=None)
     start_date: datetime
     end_date: datetime
     gmt_offset: timedelta

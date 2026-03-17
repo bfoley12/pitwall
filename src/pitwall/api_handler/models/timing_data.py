@@ -18,7 +18,9 @@ def parse_lap_time(value: str) -> timedelta:
     millis = int(match.group(3).ljust(3, "0")[:3])
     return timedelta(minutes=minutes, seconds=seconds, milliseconds=millis)
 
+
 LapTime = Annotated[timedelta, BeforeValidator(parse_lap_time)]
+
 
 class LastLapTime(F1Model):
     value: LapTime = Field(alias="Value")
@@ -27,15 +29,18 @@ class LastLapTime(F1Model):
     overall_fastest: bool = Field(alias="OverallFastest")
     perosnal_fastest: bool = Field(alias="PersonalFastest")
 
+
 class BestLapTime(F1Model):
     value: LapTime = Field(alias="Value")
     lap: int = Field(alias="Lap")
+
 
 class SpeedTrap(F1Model):
     value: str = Field(alias="Value")
     status: int = Field(alias="Status")
     overall_fastest: bool = Field(alias="OverallFastest")
     personal_fastest: bool = Field(alias="PersonalFastest")
+
 
 class Speeds(F1Model):
     # TODO: Figure out what i1, i2, fl, and st are
@@ -44,9 +49,11 @@ class Speeds(F1Model):
     fl: SpeedTrap = Field(alias="FL")
     st: SpeedTrap = Field(alias="ST")
 
+
 class Segment(F1Model):
     # TODO: Figure out how status encodes
     status: int = Field(alias="Status")
+
 
 class Sector(F1Model):
     stopped: bool = Field(alias="Stopped")
@@ -58,9 +65,11 @@ class Sector(F1Model):
     overall_fastest: bool = Field(alias="OverallFastest")
     personal_fastest: bool = Field(alias="PersonalFastest")
 
+
 class IntervalData(F1Model):
     value: str = Field(alias="Value")
     catching: bool = Field(alias="Catching")
+
 
 class TimingLine(F1Model):
     racing_number: str = Field(alias="RacingNumber")
@@ -70,12 +79,15 @@ class TimingLine(F1Model):
 
     # Practice fields
     time_diff_to_fastest: float | int | None = Field(None, alias="TimeDiffToFastest")
-    time_diff_to_position_ahead: float | int | None = Field(None, alias="TimeDiffToPositionAhead")
-
+    time_diff_to_position_ahead: float | int | None = Field(
+        None, alias="TimeDiffToPositionAhead"
+    )
 
     # Race fields
     gap_to_leader: float | int | None = Field(None, alias="GapToLeader")
-    interval_to_position_ahead: IntervalData | None = Field(None, alias="IntervalToPositionAhead")
+    interval_to_position_ahead: IntervalData | None = Field(
+        None, alias="IntervalToPositionAhead"
+    )
 
     # Common
     retired: bool = Field(alias="Retired")
@@ -110,6 +122,7 @@ class TimingLine(F1Model):
             return float(cleaned)
         except ValueError:
             return None
+
 
 class TimingDataF1(F1Model):
     lines: dict[str, TimingLine] = Field(alias="Lines")

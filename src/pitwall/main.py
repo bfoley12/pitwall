@@ -16,7 +16,12 @@ def main(
     client = F1Client()
 
     if meeting is not None and session is not None:
-        print(client.get_session(year=year, meeting=meeting, session=SessionSubType.parse(session)))
+        print(
+            client.get_car_data(
+                year=year, meeting=meeting, session=SessionSubType.parse(session)
+            )
+        )
+
 
 if __name__ == "__main__":
     app()

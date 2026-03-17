@@ -28,6 +28,7 @@ class SessionSubType(StrEnum):
     @override
     def __str__(self) -> str:
         return self.value
+
     @classmethod
     def parse(cls, value: str) -> SessionSubType:
         cleaned = value.strip()
@@ -247,10 +248,7 @@ class SessionFeeds(F1Model):
 
     @override
     def __str__(self) -> str:
-        set_feeds = {
-            k: v for k, v in self.__dict__.items()
-            if isinstance(v, Feed)
-        }
+        set_feeds = {k: v for k, v in self.__dict__.items() if isinstance(v, Feed)}
         extra = self.__dict__.get("extra", {})
         if extra:
             set_feeds["extra"] = extra

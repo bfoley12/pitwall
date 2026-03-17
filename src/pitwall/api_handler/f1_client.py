@@ -113,7 +113,7 @@ class F1Client:
         url = PathResolver(year=year, meeting=meeting, session=session, file=file).url
         response = self.http.get(url)
         _ = response.raise_for_status()
-        return self._decode_compressed_stream(response.text)
+        return self._decode_compressed_stream(response.text.lstrip("\ufeff"))
 
     def fetch(
         self,
@@ -127,7 +127,7 @@ class F1Client:
         response = self.http.get(url)
         _ = response.raise_for_status()
 
-        data = self._decode_compressed_stream(response.text)
+        data = self._decode_compressed_stream(response.text.lstrip("\ufeff"))
         return model.model_validate(data)
 
     def _decode_compressed_stream(self, text: str) -> dict[str, list[object]]:

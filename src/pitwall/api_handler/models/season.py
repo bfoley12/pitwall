@@ -2,7 +2,7 @@ from typing import override
 
 from pydantic import Field, model_validator
 
-from src.api_handler.models.base import F1Model
+from pitwall.api_handler.models.base import F1Model
 
 from .meeting import Meeting
 

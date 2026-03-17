@@ -4,9 +4,9 @@ import httpx
 from pydantic import BaseModel
 from pydantic.functional_validators import field_validator
 
-from src.api_handler.models.meeting import Meeting
-from src.api_handler.models.season import Season
-from src.api_handler.models.session import SessionSubType
+from pitwall.api_handler.models.meeting import Meeting
+from pitwall.api_handler.models.season import Season
+from pitwall.api_handler.models.session import SessionSubType
 
 
 class PathResolver(BaseModel):

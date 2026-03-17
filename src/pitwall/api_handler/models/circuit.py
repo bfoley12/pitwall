@@ -1,6 +1,6 @@
 from pydantic.fields import Field
 
-from src.api_handler.models.base import F1Model
+from pitwall.api_handler.models.base import F1Model
 
 
 class Circuit(F1Model):

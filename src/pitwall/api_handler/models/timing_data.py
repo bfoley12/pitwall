@@ -111,6 +111,6 @@ class TimingLine(F1Model):
         except ValueError:
             return None
 
-class TimingData(F1Model):
+class TimingDataF1(F1Model):
     lines: dict[str, TimingLine] = Field(alias="Lines")
     withheld: bool = Field(alias="Withheld")

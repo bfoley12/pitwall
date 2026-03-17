@@ -4,7 +4,7 @@ from pitwall.api_handler.models.base import F1Model, F1ModelT
 from pitwall.api_handler.models.meeting import Meeting
 from pitwall.api_handler.models.season import Season
 from pitwall.api_handler.models.session import SessionFeeds, SessionSubType
-from pitwall.api_handler.models.timing_data import TimingData
+from pitwall.api_handler.models.timing_data import TimingDataF1
 from pitwall.api_handler.path_resolver import PathResolver
 
 
@@ -24,9 +24,9 @@ class F1Client:
 
     def timing(
             self, year: int, meeting: str, session: SessionSubType
-        ) -> TimingData:
+        ) -> TimingDataF1:
             return self.fetch(
-                model=TimingData,
+                model=TimingDataF1,
                 year=year,
                 meeting=meeting,
                 session=session,

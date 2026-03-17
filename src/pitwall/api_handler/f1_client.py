@@ -9,6 +9,7 @@ import polars as pl
 from pitwall.api_handler.models.base import F1Model, F1ModelT
 from pitwall.api_handler.models.driver_list import DriverList
 from pitwall.api_handler.models.meeting import Meeting
+from pitwall.api_handler.models.race_control_messages import RaceControlMessages
 from pitwall.api_handler.models.season import Season
 from pitwall.api_handler.models.session import SessionFeeds, SessionSubType
 from pitwall.api_handler.models.timing_data import TimingDataF1
@@ -189,6 +190,16 @@ class F1Client:
         ]
         return pl.DataFrame(rows).with_columns(
             pl.col("compound").cast(pl.Categorical),
+        )
+    def get_rcm(
+        self, year: int, meeting: str, session: SessionSubType
+    ) -> RaceControlMessages:
+        return self.fetch(
+            model=RaceControlMessages,
+            year=year,
+            meeting=meeting,
+            session=session,
+            file="RaceControlMessages.json",
         )
 
     def get_file(

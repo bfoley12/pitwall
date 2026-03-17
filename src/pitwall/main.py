@@ -144,6 +144,18 @@ def get_tyre_stints(
         )
     )
 
+@app.command()
+def get_rcm(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    print(
+        client.get_rcm(
+            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        )
+    )
+
 
 if __name__ == "__main__":
     app()

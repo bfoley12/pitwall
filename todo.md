@@ -9,8 +9,6 @@
 - ExtrapolatedClock
 - LapCount
 - DriverRaceInfo
-- TyreStintSeries
-- **CurrentTyres
 - SessionStatus
 - TimingAppData
 - LapSeries

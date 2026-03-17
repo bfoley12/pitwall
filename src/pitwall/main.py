@@ -1,6 +1,6 @@
-import typer
-
 from dataclasses import dataclass
+
+import typer
 
 from pitwall.api_handler.f1_client import F1Client
 from pitwall.api_handler.models.session import SessionSubType
@@ -92,6 +92,7 @@ def driver_info(
         )
     )
 
+
 @app.command()
 def weather_data(
     year: int = DEFAULTS.year,
@@ -103,7 +104,8 @@ def weather_data(
             year=year, meeting=meeting, session=SessionSubType.parse(session)
         )
     )
-    
+
+
 @app.command()
 def weather_data_series(
     year: int = DEFAULTS.year,
@@ -115,6 +117,33 @@ def weather_data_series(
             year=year, meeting=meeting, session=SessionSubType.parse(session)
         )
     )
+
+
+@app.command()
+def get_current_tyre(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    print(
+        client.get_current_tyre(
+            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        )
+    )
+
+
+@app.command()
+def get_tyre_stints(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    print(
+        client.get_tyre_stints(
+            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        )
+    )
+
 
 if __name__ == "__main__":
     app()

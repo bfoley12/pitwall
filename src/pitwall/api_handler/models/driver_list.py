@@ -23,7 +23,7 @@ class DriverInfo(F1Model):
     country_code: str | None = Field(alias="CountryCode", default=None)
 
     @property
-    def team_color(self):
+    def team_color(self) -> str:
         return self.team_colour
 
 

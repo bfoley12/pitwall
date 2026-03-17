@@ -2,11 +2,9 @@ import base64
 import json
 import zlib
 from typing import Any, cast
-from dataclasses import dataclass
 
 import httpx
 import polars as pl
-from pydantic_core.core_schema import NoneSchema
 
 from pitwall.api_handler.models.base import F1Model, F1ModelT
 from pitwall.api_handler.models.driver_list import DriverList
@@ -14,6 +12,7 @@ from pitwall.api_handler.models.meeting import Meeting
 from pitwall.api_handler.models.season import Season
 from pitwall.api_handler.models.session import SessionFeeds, SessionSubType
 from pitwall.api_handler.models.timing_data import TimingDataF1
+from pitwall.api_handler.models.tyres import CurrentTyres
 from pitwall.api_handler.models.weather_data import WeatherData
 from pitwall.api_handler.path_resolver import PathResolver
 
@@ -117,7 +116,13 @@ class F1Client:
     def get_weather_data(
         self, year: int, meeting: str, session: SessionSubType
     ) -> WeatherData:
-        return self.fetch(model=WeatherData, year=year, meeting=meeting, session=session, file="WeatherData.json",)
+        return self.fetch(
+            model=WeatherData,
+            year=year,
+            meeting=meeting,
+            session=session,
+            file="WeatherData.json",
+        )
 
     def get_weather_data_series(
         self, year: int, meeting: str, session: SessionSubType
@@ -144,6 +149,46 @@ class F1Client:
         ]
         return pl.DataFrame(rows).with_columns(
             pl.col("timestamp").str.to_datetime("%Y-%m-%dT%H:%M:%S%.fZ")
+        )
+
+    def get_current_tyre(
+        self, year: int, meeting: str, session: SessionSubType
+    ) -> CurrentTyres:
+        return self.fetch(
+            model=CurrentTyres,
+            year=year,
+            meeting=meeting,
+            session=session,
+            file="CurrentTyres.json",
+        )
+
+    def get_tyre_stints(
+        self, year: int, meeting: str, session: SessionSubType
+    ) -> pl.DataFrame:
+        data = cast(
+            dict[str, Any],
+            self._fetch_raw(
+                year=year, meeting=meeting, session=session, file="TyreStintSeries.json"
+            ),
+        )
+        # TODO: think about adding on columns like stint_length (total_laps-start_laps) vs having it be calculated at needed site
+        # Leaning towards keeping this a thin wrapper and letting callers handle it. Will need to document the columns
+        rows = [
+            {
+                "car_number": car_num,
+                "stint_number": stint_idx,
+                "compound": stint["Compound"],
+                "new": stint["New"] == "true",
+                "tyres_not_changed": int(stint["TyresNotChanged"]),
+                "total_laps": stint["TotalLaps"],
+                # TODO: Clarify what StartLaps is (I assume it is laps done on tyre before this stint)
+                "start_laps": stint["StartLaps"],
+            }
+            for car_num, stints in data["Stints"].items()
+            for stint_idx, stint in enumerate(stints)
+        ]
+        return pl.DataFrame(rows).with_columns(
+            pl.col("compound").cast(pl.Categorical),
         )
 
     def get_file(

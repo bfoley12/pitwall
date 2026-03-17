@@ -2,6 +2,7 @@ from pydantic import Field
 
 from pitwall.api_handler.models.base import F1Model
 
+
 # TODO: Add units
 class WeatherData(F1Model):
     air_temp: float = Field(alias="AirTemp")

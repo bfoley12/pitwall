@@ -70,6 +70,19 @@ def timing(
 
 
 @app.command()
+def timing_stats(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    print(
+        client.get_timing_stats(
+            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        )
+    )
+
+
+@app.command()
 def car_data(
     year: int = DEFAULTS.year,
     meeting: str = DEFAULTS.meeting,

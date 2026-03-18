@@ -17,6 +17,7 @@ from pitwall.api_handler.models.session import (
     SessionSubType,
 )
 from pitwall.api_handler.models.timing_data import TimingDataF1
+from pitwall.api_handler.models.timing_stats import TimingStats
 from pitwall.api_handler.models.tyres import CurrentTyres
 from pitwall.api_handler.models.weather_data import WeatherData
 from pitwall.api_handler.path_resolver import PathResolver
@@ -418,6 +419,17 @@ class F1Client:
             for lap_number, position in enumerate(data["LapPosition"])
         ]
         return pl.DataFrame(rows)
+
+    def get_timing_stats(
+        self, year: int, meeting: str, session: SessionSubType
+    ) -> TimingStats:
+        return self.fetch(
+            model=TimingStats,
+            year=year,
+            meeting=meeting,
+            session=session,
+            file="TimingStats.json",
+        )
 
     def get_file(
         self, year: int, meeting: str, session: SessionSubType, file: str

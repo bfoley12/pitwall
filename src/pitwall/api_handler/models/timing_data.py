@@ -7,6 +7,8 @@ from pydantic.functional_validators import field_validator
 
 from pitwall.api_handler.models.base import F1Model
 
+# TODO: Unify with timing_stats? I modeled it by file, but there is significant overlap
+
 
 def parse_lap_time(value: str) -> timedelta:
     """Parse F1 lap time string like '1:26.933' or '26.933' into timedelta."""
@@ -35,11 +37,12 @@ class BestLapTime(F1Model):
     lap: int = Field(alias="Lap")
 
 
+# Added optionals to allow reuse in timing_stats
 class SpeedTrap(F1Model):
     value: str = Field(alias="Value")
     status: int = Field(alias="Status")
-    overall_fastest: bool = Field(alias="OverallFastest")
-    personal_fastest: bool = Field(alias="PersonalFastest")
+    overall_fastest: bool | None = Field(alias="OverallFastest")
+    personal_fastest: bool | None = Field(alias="PersonalFastest")
 
 
 class Speeds(F1Model):

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import polars as pl
 
 import typer
 
@@ -232,6 +233,16 @@ def timing_app(
     )
     print(df)
 
+@app.command()
+def driver_race_info(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get_driver_race_info(
+        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    )
+    print(df)
 
 if __name__ == "__main__":
     app()

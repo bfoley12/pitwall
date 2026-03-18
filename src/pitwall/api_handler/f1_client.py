@@ -8,6 +8,7 @@ import polars as pl
 
 from pitwall.api_handler.models.base import F1Model, F1ModelT
 from pitwall.api_handler.models.driver_list import DriverList
+from pitwall.api_handler.models.driver_race_info import DriverRaceInfo, build_driver_race_info
 from pitwall.api_handler.models.meeting import Meeting
 from pitwall.api_handler.models.race_control_messages import RaceControlMessages
 from pitwall.api_handler.models.season import Season
@@ -442,6 +443,18 @@ class F1Client:
             session=session,
             file="TimingAppData.json",
         )
+
+    def get_driver_race_info(
+        self, year: int, meeting: str, session: SessionSubType,
+    ) -> DriverRaceInfo:
+        data = cast(
+            list[Any],
+            self._fetch_raw(
+                year=year, meeting=meeting, session=session,
+                file="DriverRaceInfo.jsonStream",
+            ),
+        )
+        return build_driver_race_info(data)
 
     def get_file(
         self, year: int, meeting: str, session: SessionSubType, file: str

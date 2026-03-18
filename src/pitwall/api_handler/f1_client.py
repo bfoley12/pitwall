@@ -11,7 +11,11 @@ from pitwall.api_handler.models.driver_list import DriverList
 from pitwall.api_handler.models.meeting import Meeting
 from pitwall.api_handler.models.race_control_messages import RaceControlMessages
 from pitwall.api_handler.models.season import Season
-from pitwall.api_handler.models.session import Session, SessionIndex, SessionInfo, SessionSubType
+from pitwall.api_handler.models.session import (
+    SessionIndex,
+    SessionInfo,
+    SessionSubType,
+)
 from pitwall.api_handler.models.timing_data import TimingDataF1
 from pitwall.api_handler.models.tyres import CurrentTyres
 from pitwall.api_handler.models.weather_data import WeatherData
@@ -51,8 +55,16 @@ class F1Client:
         season = self.get_season(year=year)
         return season.get_meeting(meeting)
 
-    def get_session(self, year: int, meeting: str, session: SessionSubType) -> SessionInfo:
-        return self.fetch(model=SessionInfo, year=year, meeting=meeting, session=session, file="SessionInfo.json")
+    def get_session(
+        self, year: int, meeting: str, session: SessionSubType
+    ) -> SessionInfo:
+        return self.fetch(
+            model=SessionInfo,
+            year=year,
+            meeting=meeting,
+            session=session,
+            file="SessionInfo.json",
+        )
 
     def get_session_feeds(
         self, year: int, meeting: str, session: SessionSubType

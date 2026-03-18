@@ -11,7 +11,7 @@ from pitwall.api_handler.models.driver_list import DriverList
 from pitwall.api_handler.models.meeting import Meeting
 from pitwall.api_handler.models.race_control_messages import RaceControlMessages
 from pitwall.api_handler.models.season import Season
-from pitwall.api_handler.models.session import SessionFeeds, SessionSubType
+from pitwall.api_handler.models.session import Session, SessionIndex, SessionInfo, SessionSubType
 from pitwall.api_handler.models.timing_data import TimingDataF1
 from pitwall.api_handler.models.tyres import CurrentTyres
 from pitwall.api_handler.models.weather_data import WeatherData
@@ -19,7 +19,7 @@ from pitwall.api_handler.path_resolver import PathResolver
 
 
 class PitStopBroadcastEvent:
-    __slots__ = ("displayed_at", "cleared_at", "lap", "duration")
+    __slots__ = ("cleared_at", "displayed_at", "duration", "lap")
 
     def __init__(self, displayed_at: str, lap: str, duration: float | None) -> None:
         self.displayed_at = displayed_at
@@ -51,11 +51,14 @@ class F1Client:
         season = self.get_season(year=year)
         return season.get_meeting(meeting)
 
-    def get_session(
+    def get_session(self, year: int, meeting: str, session: SessionSubType) -> SessionInfo:
+        return self.fetch(model=SessionInfo, year=year, meeting=meeting, session=session, file="SessionInfo.json")
+
+    def get_session_feeds(
         self, year: int, meeting: str, session: SessionSubType
-    ) -> SessionFeeds:
+    ) -> SessionIndex:
         return self.fetch(
-            model=SessionFeeds, year=year, meeting=meeting, session=session
+            model=SessionIndex, year=year, meeting=meeting, session=session
         )
 
     def get_timing(
@@ -382,7 +385,10 @@ class F1Client:
         )
 
     def get_lap_series(
-        self, year: int, meeting: str, session: SessionSubType,
+        self,
+        year: int,
+        meeting: str,
+        session: SessionSubType,
     ) -> pl.DataFrame:
         data = cast(
             dict[str, Any],

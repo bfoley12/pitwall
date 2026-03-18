@@ -26,7 +26,8 @@ def season(year: int = DEFAULTS.year) -> None:
 
 @app.command()
 def meeting(year: int = DEFAULTS.year, name: str = DEFAULTS.meeting) -> None:
-    print(client.get_meeting(year=year, meeting=name))
+    res = client.get_meeting(year=year, meeting=name)
+    print(res.sessions[0])
 
 
 @app.command()
@@ -37,6 +38,19 @@ def session(
 ) -> None:
     print(
         client.get_session(
+            year=year, meeting=meeting, session=SessionSubType.parse(name)
+        )
+    )
+
+
+@app.command()
+def session_index(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    name: str = DEFAULTS.session,
+) -> None:
+    print(
+        client.get_session_feeds(
             year=year, meeting=meeting, session=SessionSubType.parse(name)
         )
     )
@@ -144,6 +158,7 @@ def get_tyre_stints(
         )
     )
 
+
 @app.command()
 def get_rcm(
     year: int = DEFAULTS.year,
@@ -156,6 +171,7 @@ def get_rcm(
         )
     )
 
+
 @app.command()
 def track_status(
     year: int = DEFAULTS.year,
@@ -167,6 +183,7 @@ def track_status(
     )
     print(df)
 
+
 @app.command()
 def pitstops(
     year: int = DEFAULTS.year,
@@ -177,6 +194,7 @@ def pitstops(
         year=year, meeting=meeting, session=SessionSubType.parse(session)
     )
     print(df)
+
 
 @app.command()
 def lap_series(

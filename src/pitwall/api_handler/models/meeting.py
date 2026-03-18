@@ -3,10 +3,10 @@ from typing import override
 
 from pydantic import Field, model_validator
 
-from pitwall.api_handler.models.base import F1Model
-
+from .base import F1Model
 from .circuit import Circuit
 from .country import Country
+from .meeting_data import MeetingData
 from .session import Session
 
 SESSION_KEYS = {
@@ -20,15 +20,18 @@ SESSION_KEYS = {
 
 
 class Meeting(F1Model):
-    key: int = Field(alias="Key")
     code: str = Field(alias="Code")
     number: int = Field(alias="Number")
-    location: str = Field(alias="Location")
-    official_name: str = Field(alias="OfficialName")
-    name: str = Field(alias="Name")
-    country: Country = Field(alias="Country")
-    circuit: Circuit = Field(alias="Circuit")
+    data: MeetingData
     sessions: list[Session] = Field(alias="Sessions")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _extract_data(cls, data: dict[str, object]) -> dict[str, object]:
+        session_keys = {"Sessions"}
+        meeting_data = {k: v for k, v in data.items() if k not in session_keys}
+        data["data"] = meeting_data
+        return data
 
     @model_validator(mode="after")
     def sort_sessions(self) -> "Meeting":
@@ -63,6 +66,30 @@ class Meeting(F1Model):
     def race(self) -> Session:
         return self._by_type("Race")
 
+    @property
+    def key(self) -> int:
+        return self.data.key
+
+    @property
+    def location(self) -> str:
+        return self.data.location
+
+    @property
+    def official_name(self) -> str:
+        return self.data.official_name
+
+    @property
+    def name(self) -> str:
+        return self.data.name
+
+    @property
+    def country(self) -> Country:
+        return self.data.country
+
+    @property
+    def circuit(self) -> Circuit:
+        return self.data.circuit
+
     def _by_type(self, name: str) -> Session:
         value = next(
             (
@@ -73,7 +100,7 @@ class Meeting(F1Model):
             None,
         )
         if value is None:
-            raise ValueError(f"No {name} found for {self.name}")
+            raise ValueError(f"No {name} found for {self.data.name}")
         return value
 
     @property
@@ -93,7 +120,7 @@ class Meeting(F1Model):
 
     @override
     def __str__(self) -> str:
-        res = f"{self.name} ({self.weekend_start_datetime} - {self.weekend_end_datetime})\n\t"
+        res = f"{self.data.name} ({self.weekend_start_datetime} - {self.weekend_end_datetime})\n\t"
         session_str = ", ".join([str(s.sub_type) for s in self.sessions])
         res += f"[{session_str}]"
         return res

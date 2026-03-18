@@ -46,9 +46,11 @@ class SafetyCarStatus(FlexibleStrEnum):
     ENDING = "ENDING"
     IN_THIS_LAP = "IN THIS LAP"
 
+
 class DrsStatus(FlexibleStrEnum):
     DISABLED = "DISABLED"
     ENABLED = "ENABLED"
+
 
 class SafetyCarMode(FlexibleStrEnum):
     SAFETY_CAR = "SAFETY CAR"
@@ -63,7 +65,9 @@ class RcmCategory(FlexibleStrEnum):
 
 class RaceControlBase(F1Model):
     utc: datetime = Field(alias="Utc")
-    lap: int | None = Field(alias="Lap", default = None) # Optional because of non-race flags
+    lap: int | None = Field(
+        alias="Lap", default=None
+    )  # Optional because of non-race flags
     message: str = Field(alias="Message")
 
 
@@ -84,6 +88,8 @@ class FlagMessage(RaceControlBase):
 class DrsMessage(RaceControlBase):
     category: Literal["Drs"] = Field(alias="Category")
     status: DrsStatus = Field(alias="Status")
+
+
 class OtherMessage(RaceControlBase):
     category: Literal["Other"] = Field(alias="Category")
 

@@ -14,6 +14,7 @@ from pydantic import (
 from pydantic.alias_generators import to_pascal
 
 from pitwall.api_handler.models.base import F1Model
+from pitwall.api_handler.models.meeting_data import MeetingData
 
 
 def _normalize_session_name(v: object) -> object:
@@ -72,6 +73,40 @@ SessionSubTypeField = Annotated[
 ]
 
 
+# TODO: eventually move status to be a StrEnum to control vocab bette
+class ArchiveStatus(F1Model):
+    status: str = Field(alias="Status")
+
+
+# This is used to model SessionInfo.json information, which is more descriptive of a session than Meeting-level session info (class Session)
+class SessionInfo(F1Model):
+    """Rich session info from SessionInfo.json. Composes Session + Meeting context."""
+
+    session: Session
+    meeting: MeetingData = Field(alias="Meeting")
+    archive_status: ArchiveStatus = Field(alias="ArchiveStatus")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _extract_session(cls, data: dict[str, object]) -> dict[str, object]:
+        """Session fields live at the root level alongside Meeting/ArchiveStatus.
+        Extract them into a nested 'session' key so Pydantic validates Session separately."""
+        session_keys = {
+            "Key",
+            "Type",
+            "Number",
+            "Name",
+            "StartDate",
+            "EndDate",
+            "GmtOffset",
+            "Path",
+        }
+        session_data = {k: v for k, v in data.items() if k in session_keys}
+        data["session"] = session_data
+        return data
+
+
+# This is used within Meeting to capture Meeting-level session info
 class Session(F1Model):
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True, alias_generator=to_pascal
@@ -191,7 +226,7 @@ _FEED_MAP: dict[str, str] = {
 _SENTINEL = object()
 
 
-class SessionFeeds(F1Model):
+class SessionIndex(F1Model):
     model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
     # Metadata

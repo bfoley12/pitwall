@@ -178,6 +178,17 @@ def pitstops(
     )
     print(df)
 
+@app.command()
+def lap_series(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get_lap_series(
+        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    )
+    print(df)
+
 
 if __name__ == "__main__":
     app()

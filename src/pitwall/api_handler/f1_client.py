@@ -381,6 +381,26 @@ class F1Client:
             pl.col("utc").str.to_datetime("%Y-%m-%dT%H:%M:%S%.fZ", strict=False),
         )
 
+    def get_lap_series(
+        self, year: int, meeting: str, session: SessionSubType,
+    ) -> pl.DataFrame:
+        data = cast(
+            dict[str, Any],
+            self._fetch_raw(
+                year=year, meeting=meeting, session=session, file="LapSeries.json"
+            ),
+        )
+        rows = [
+            {
+                "car_number": data["RacingNumber"],
+                "lap_number": lap_number,
+                "position": position,
+            }
+            for index, data in data.items()
+            for lap_number, position in enumerate(data["LapPosition"])
+        ]
+        return pl.DataFrame(rows)
+
     def get_file(
         self, year: int, meeting: str, session: SessionSubType, file: str
     ) -> F1Model:

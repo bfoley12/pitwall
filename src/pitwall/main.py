@@ -167,6 +167,17 @@ def track_status(
     )
     print(df)
 
+@app.command()
+def pitstops(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get_pit_stops(
+        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    )
+    print(df)
+
 
 if __name__ == "__main__":
     app()

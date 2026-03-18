@@ -18,6 +18,28 @@ from pitwall.api_handler.models.weather_data import WeatherData
 from pitwall.api_handler.path_resolver import PathResolver
 
 
+class PitStopBroadcastEvent:
+    __slots__ = ("displayed_at", "cleared_at", "lap", "duration")
+
+    def __init__(self, displayed_at: str, lap: str, duration: float | None) -> None:
+        self.displayed_at = displayed_at
+        self.cleared_at: str | None = None
+        self.lap = lap
+        self.duration: float | None = duration
+
+
+PIT_STOP_SCHEMA = {
+    "session_time": pl.Utf8,
+    "car_number": pl.Utf8,
+    "pit_stop_time": pl.Float64,
+    "pit_lane_time": pl.Float64,
+    "lap": pl.Int64,
+    "utc": pl.Utf8,
+    "broadcast_displayed_at": pl.Utf8,
+    "broadcast_cleared_at": pl.Utf8,
+}
+
+
 class F1Client:
     def __init__(self) -> None:
         self.http: httpx.Client = httpx.Client()
@@ -191,6 +213,7 @@ class F1Client:
         return pl.DataFrame(rows).with_columns(
             pl.col("compound").cast(pl.Categorical),
         )
+
     def get_rcm(
         self, year: int, meeting: str, session: SessionSubType
     ) -> RaceControlMessages:
@@ -202,11 +225,16 @@ class F1Client:
             file="RaceControlMessages.json",
         )
 
-    def get_track_status(self, year: int, meeting: str, session: SessionSubType) -> pl.DataFrame:
+    def get_track_status(
+        self, year: int, meeting: str, session: SessionSubType
+    ) -> pl.DataFrame:
         data = cast(
             list[Any],
             self._fetch_raw(
-                year=year, meeting=meeting, session=session, file="TrackStatus.jsonStream"
+                year=year,
+                meeting=meeting,
+                session=session,
+                file="TrackStatus.jsonStream",
             ),
         )
         rows = [
@@ -218,6 +246,140 @@ class F1Client:
             for entry in data
         ]
         return pl.DataFrame(rows)
+
+    # TODO: Refactor method to make it more legible
+    # TODO: Lots of Null pitstops at the end of the 2026 Shanghai sprint - looks like its the end of the race and cars returning to garage?
+    # But GR (car 63) stopped around the same time and it was lap 13... Need to investigate
+    # TODO: session_time and broadcast_displayed_at seem 100% identical. broadcast_displayed_at may be redundant
+    # TODO: check if broadcast_cleared_at is accurate
+    def get_pit_stops(
+        self, year: int, meeting: str, session: SessionSubType
+    ) -> pl.DataFrame:
+        pit_stop_raw = self._try_fetch_raw(
+            year=year, meeting=meeting, session=session, file="PitStop.jsonStream"
+        )
+        series_raw = self._try_fetch_raw(
+            year=year, meeting=meeting, session=session, file="PitStopSeries.jsonStream"
+        )
+        collection_raw = self._try_fetch_raw(
+            year=year,
+            meeting=meeting,
+            session=session,
+            file="PitLaneTimeCollection.jsonStream",
+        )
+
+        if pit_stop_raw is None and collection_raw is None:
+            return pl.DataFrame(schema=PIT_STOP_SCHEMA)
+
+        # Build UTC lookup from PitStopSeries
+        utc_lookup: dict[tuple[str, str], str] = {}
+        if series_raw is not None:
+            for entry in cast(list[Any], series_raw):
+                pit_times = entry["Data"].get("PitTimes", {})
+                for car_num, stops in pit_times.items():
+                    if isinstance(stops, list):
+                        for stop in stops:
+                            key = (car_num, stop["PitStop"]["PitLaneTime"])
+                            utc_lookup[key] = stop["Timestamp"]
+                    elif isinstance(stops, dict):
+                        for stop in stops.values():
+                            if isinstance(stop, dict) and "PitStop" in stop:
+                                key = (car_num, stop["PitStop"]["PitLaneTime"])
+                                utc_lookup[key] = stop["Timestamp"]
+
+        # Build broadcast lookup from PitLaneTimeCollection
+        broadcast_events: dict[str, dict[str, list[PitStopBroadcastEvent]]] = {}
+        if collection_raw is not None:
+            pending: dict[str, PitStopBroadcastEvent] = {}
+            for entry in cast(list[Any], collection_raw):
+                pit_times = entry["Data"].get("PitTimes", {})
+                timestamp = entry["Timestamp"]
+
+                for car_num in pit_times.get("_deleted", []):
+                    if car_num in pending:
+                        event = pending.pop(car_num)
+                        event.cleared_at = timestamp
+                        broadcast_events.setdefault(car_num, {}).setdefault(
+                            event.lap, []
+                        ).append(event)
+
+                for car_num, pit_data in pit_times.items():
+                    if car_num == "_deleted":
+                        continue
+                    duration_str = pit_data.get("Duration", "")
+                    duration = float(duration_str) if duration_str else None
+                    pending[car_num] = PitStopBroadcastEvent(
+                        displayed_at=timestamp,
+                        lap=pit_data["Lap"],
+                        duration=duration,
+                    )
+
+            for car_num, event in pending.items():
+                broadcast_events.setdefault(car_num, {}).setdefault(
+                    event.lap, []
+                ).append(event)
+
+        # Build rows from PitStop (primary) or PitLaneTimeCollection (fallback)
+        rows: list[dict[str, object]] = []
+
+        if pit_stop_raw is not None:
+            for entry in cast(list[Any], pit_stop_raw):
+                d = entry["Data"]
+                car = d["RacingNumber"]
+                lane_time = float(d["PitLaneTime"])
+                lap = d.get("Lap")
+
+                # UTC enrichment
+                key = (car, d["PitLaneTime"])
+                utc = utc_lookup.get(key)
+
+                # Broadcast enrichment
+                broadcast = None
+                if lap is not None:
+                    lap_broadcasts = broadcast_events.get(car, {}).get(str(lap), [])
+                    if lap_broadcasts:
+                        broadcast = lap_broadcasts.pop(0)
+
+                rows.append(
+                    {
+                        "session_time": entry["Timestamp"],
+                        "car_number": car,
+                        "pit_stop_time": float(d["PitStopTime"])
+                        if "PitStopTime" in d
+                        else None,
+                        "pit_lane_time": lane_time,
+                        "lap": int(lap) if lap is not None else None,
+                        "utc": utc,
+                        "broadcast_displayed_at": broadcast.displayed_at
+                        if broadcast
+                        else None,
+                        "broadcast_cleared_at": broadcast.cleared_at
+                        if broadcast
+                        else None,
+                    }
+                )
+        else:
+            # Fallback: reconstruct from PitLaneTimeCollection only
+            for car_num, laps in broadcast_events.items():
+                for lap, events in laps.items():
+                    for event in events:
+                        rows.append(
+                            {
+                                "session_time": event.displayed_at,
+                                "car_number": car_num,
+                                "pit_stop_time": None,
+                                "pit_lane_time": event.duration,
+                                "lap": int(lap),
+                                "utc": None,
+                                "broadcast_displayed_at": event.displayed_at,
+                                "broadcast_cleared_at": event.cleared_at,
+                            }
+                        )
+
+        df = pl.DataFrame(rows, schema=PIT_STOP_SCHEMA)
+        return df.with_columns(
+            pl.col("utc").str.to_datetime("%Y-%m-%dT%H:%M:%S%.fZ", strict=False),
+        )
 
     def get_file(
         self, year: int, meeting: str, session: SessionSubType, file: str
@@ -251,6 +413,20 @@ class F1Client:
         response = self.http.get(url)
         _ = response.raise_for_status()
         return self._decode_response(response, file)
+
+    def _try_fetch_raw(
+        self,
+        year: int | None = None,
+        meeting: str | None = None,
+        session: SessionSubType | None = None,
+        file: str = "Index.json",
+    ) -> object | None:
+        try:
+            return self._fetch_raw(
+                year=year, meeting=meeting, session=session, file=file
+            )
+        except httpx.HTTPStatusError:
+            return None
 
     def _decode_response(self, response: httpx.Response, file: str) -> object:
         text = response.text.lstrip("\ufeff")

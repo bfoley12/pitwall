@@ -16,6 +16,7 @@ from pitwall.api_handler.models.session import (
     SessionInfo,
     SessionSubType,
 )
+from pitwall.api_handler.models.timing_app import TimingApp
 from pitwall.api_handler.models.timing_data import TimingDataF1
 from pitwall.api_handler.models.timing_stats import TimingStats
 from pitwall.api_handler.models.tyres import CurrentTyres
@@ -429,6 +430,17 @@ class F1Client:
             meeting=meeting,
             session=session,
             file="TimingStats.json",
+        )
+
+    def get_timing_app(
+        self, year: int, meeting: str, session: SessionSubType
+    ) -> TimingApp:
+        return self.fetch(
+            model=TimingApp,
+            year=year,
+            meeting=meeting,
+            session=session,
+            file="TimingAppData.json",
         )
 
     def get_file(

@@ -221,5 +221,17 @@ def lap_series(
     print(df)
 
 
+@app.command()
+def timing_app(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get_timing_app(
+        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    )
+    print(df)
+
+
 if __name__ == "__main__":
     app()

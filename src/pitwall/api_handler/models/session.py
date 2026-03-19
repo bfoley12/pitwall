@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from enum import StrEnum
-from typing import Annotated, ClassVar, cast, override
+from typing import Annotated, ClassVar, Literal, cast, override
 
 from pydantic import (
     BeforeValidator,
@@ -42,6 +42,7 @@ _SESSION_ALIASES: dict[str, str] = {
 }
 
 
+
 class SessionSubType(StrEnum):
     PRACTICE_1 = "Practice 1"
     PRACTICE_2 = "Practice 2"
@@ -50,6 +51,8 @@ class SessionSubType(StrEnum):
     SPRINT_SHOOTOUT = "Sprint Shootout"
     SPRINT = "Sprint"
     RACE = "Race"
+
+    RACE_ONLY: ClassVar[frozenset[SessionSubType]]
 
     @override
     def __str__(self) -> str:
@@ -67,6 +70,12 @@ class SessionSubType(StrEnum):
             ) from None
         return result
 
+
+
+RACE_ONLY_SESSIONS = frozenset({
+    SessionSubType.RACE,
+    SessionSubType.SPRINT,
+})
 
 SessionSubTypeField = Annotated[
     SessionSubType, BeforeValidator(_normalize_session_name)

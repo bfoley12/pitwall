@@ -1,18 +1,20 @@
 import base64
 import json
 import zlib
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import httpx
 import polars as pl
 
 from pitwall.api_handler.models.base import F1Model, F1ModelT
+from pitwall.api_handler.models.championship_prediction import ChampionshipPrediction, ChampionshipPredictionStream, build_championship_prediction_stream
 from pitwall.api_handler.models.driver_list import DriverList
 from pitwall.api_handler.models.driver_race_info import DriverRaceInfo, build_driver_race_info
 from pitwall.api_handler.models.meeting import Meeting
 from pitwall.api_handler.models.race_control_messages import RaceControlMessages
 from pitwall.api_handler.models.season import Season
 from pitwall.api_handler.models.session import (
+    RACE_ONLY_SESSIONS,
     SessionIndex,
     SessionInfo,
     SessionSubType,
@@ -24,6 +26,11 @@ from pitwall.api_handler.models.tyres import CurrentTyres
 from pitwall.api_handler.models.weather_data import WeatherData
 from pitwall.api_handler.path_resolver import PathResolver
 
+
+_RACE_SESSIONS: frozenset[SessionSubType] = frozenset({
+    SessionSubType.RACE,
+    SessionSubType.SPRINT,
+})
 
 class PitStopBroadcastEvent:
     __slots__ = ("cleared_at", "displayed_at", "duration", "lap")
@@ -455,6 +462,33 @@ class F1Client:
             ),
         )
         return build_driver_race_info(data)
+
+    def get_championship_prediction(
+        self, year: int, meeting: str, session: SessionSubType,
+    ) -> ChampionshipPrediction:
+        if session not in RACE_ONLY_SESSIONS:
+            msg = f"ChampionshipPrediction is only available for Race/Sprint sessions, got {session}"
+            raise ValueError(msg)
+        return self.fetch(
+            year=year, meeting=meeting, session=session,
+            file="ChampionshipPrediction.json",
+            model=ChampionshipPrediction,
+        )
+
+    def get_championship_prediction_stream(
+        self, year: int, meeting: str, session: SessionSubType,
+    ) -> ChampionshipPredictionStream:
+        if session not in RACE_ONLY_SESSIONS:
+            msg = f"ChampionshipPrediction is only available for Race/Sprint sessions, got {session}"
+            raise ValueError(msg)
+        data = cast(
+            list[Any],
+            self._fetch_raw(
+                year=year, meeting=meeting, session=session,
+                file="ChampionshipPrediction.jsonStream",
+            ),
+        )
+        return build_championship_prediction_stream(data)
 
     def get_file(
         self, year: int, meeting: str, session: SessionSubType, file: str

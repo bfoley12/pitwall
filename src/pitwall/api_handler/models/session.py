@@ -11,10 +11,10 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from pydantic.alias_generators import to_pascal
 
 from pitwall.api_handler.models.base import F1Model
 from pitwall.api_handler.models.meeting_data import MeetingData
+
 from .archive_status import ArchiveStatus
 
 
@@ -82,6 +82,7 @@ SessionSubTypeField = Annotated[
     SessionSubType, BeforeValidator(_normalize_session_name)
 ]
 
+
 # This is used to model SessionInfo.json information, which is more descriptive of a session than Meeting-level session info (class Session)
 class SessionInfo(F1Model):
     """Rich session info from SessionInfo.json. Composes Session + Meeting context."""
@@ -112,7 +113,6 @@ class SessionInfo(F1Model):
 
 # This is used within Meeting to capture Meeting-level session info
 class Session(F1Model):
-
     key: int
     type: SessionType | None
     number: int | None = None

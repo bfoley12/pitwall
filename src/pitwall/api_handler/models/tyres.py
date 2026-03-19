@@ -1,9 +1,7 @@
 from collections.abc import Iterator
 from enum import StrEnum
-from typing import ClassVar
 
-from pydantic import ConfigDict, Field
-from pydantic.alias_generators import to_pascal
+from pydantic import Field
 
 from pitwall.api_handler.models.base import F1Model
 

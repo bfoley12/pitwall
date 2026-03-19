@@ -1,8 +1,7 @@
-from typing import TypeVar
+from typing import ClassVar, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_pascal
-from typing import ClassVar
 
 
 class F1Model(BaseModel):

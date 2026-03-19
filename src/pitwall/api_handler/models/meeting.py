@@ -1,8 +1,7 @@
 from datetime import datetime
-from typing import ClassVar, override
+from typing import override
 
-from pydantic import ConfigDict, model_validator
-from pydantic.alias_generators import to_pascal
+from pydantic import model_validator
 
 from .base import F1Model
 from .circuit import Circuit

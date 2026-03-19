@@ -1,8 +1,6 @@
 from datetime import timedelta
-from typing import ClassVar
 
-from pydantic import ConfigDict, Field, field_validator, model_validator
-from pydantic.alias_generators import to_pascal
+from pydantic import Field, field_validator, model_validator
 
 from .base import F1Model
 from .session import SessionType

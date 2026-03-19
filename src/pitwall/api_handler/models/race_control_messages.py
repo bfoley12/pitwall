@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, ClassVar, Literal, override
+from typing import Annotated, Literal
 
-from pydantic import ConfigDict, Discriminator, Field, Tag
-from pydantic.alias_generators import to_pascal
+from pydantic import Discriminator, Field, Tag
 
 from pitwall.api_handler.models.base import F1Model
 

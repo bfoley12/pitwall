@@ -268,6 +268,7 @@ def championship_prediction_stream(
     )
     print(df)
 
+
 @app.command()
 def content_streams(
     year: int = DEFAULTS.year,

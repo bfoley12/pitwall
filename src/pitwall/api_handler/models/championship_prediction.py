@@ -4,7 +4,6 @@ from typing import Any, ClassVar
 
 import polars as pl
 from pydantic import ConfigDict
-from pydantic.alias_generators import to_pascal
 
 from .base import F1Model
 
@@ -13,7 +12,6 @@ from .base import F1Model
 
 class DriverPrediction(F1Model):
     """Championship prediction for a single driver."""
-
 
     racing_number: str
     current_position: int
@@ -24,7 +22,6 @@ class DriverPrediction(F1Model):
 
 class TeamPrediction(F1Model):
     """Championship prediction for a single team."""
-
 
     team_name: str
     current_position: int
@@ -39,7 +36,6 @@ class ChampionshipPrediction(F1Model):
     Contains pre-race standings (current) and F1's predicted end-of-race
     standings for both drivers and constructors.
     """
-
 
     drivers: dict[str, DriverPrediction]
     teams: dict[str, TeamPrediction]

@@ -1,9 +1,8 @@
 import re
 from datetime import timedelta
-from typing import Annotated, ClassVar
+from typing import Annotated
 
-from pydantic import BeforeValidator, ConfigDict, Field
-from pydantic.alias_generators import to_pascal
+from pydantic import BeforeValidator, Field
 from pydantic.functional_validators import field_validator
 
 from pitwall.api_handler.models.base import F1Model

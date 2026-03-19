@@ -1,7 +1,4 @@
-from typing import ClassVar
-
-from pydantic import ConfigDict, Field, model_validator
-from pydantic.alias_generators import to_pascal
+from pydantic import Field, model_validator
 
 from pitwall.api_handler.models.base import F1Model
 

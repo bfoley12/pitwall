@@ -516,19 +516,21 @@ class F1Client:
         return build_championship_prediction_stream(data)
 
     def get_content_streams(
-        self, year: int, meeting: str, session: SessionSubType,
+        self,
+        year: int,
+        meeting: str,
+        session: SessionSubType,
     ) -> list[ContentStream]:
         data = cast(
             dict[str, Any],
             self._fetch_raw(
-                year=year, meeting=meeting, session=session,
+                year=year,
+                meeting=meeting,
+                session=session,
                 file="ContentStreams.json",
-            )
+            ),
         )
-        return [
-            ContentStream.model_validate(s)
-            for s in data.get("Streams", [])
-        ]
+        return [ContentStream.model_validate(s) for s in data.get("Streams", [])]
 
     def get_file(
         self, year: int, meeting: str, session: SessionSubType, file: str

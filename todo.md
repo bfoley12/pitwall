@@ -1,7 +1,4 @@
-- SessionInfo
-- ArchiveStatus
-- TrackStatus
-- Content Streams
+- ContentStreams
 - DriverTracker
 - AudioStreams
 - ExtrapolatedClock

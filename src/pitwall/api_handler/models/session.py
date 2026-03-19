@@ -15,6 +15,7 @@ from pydantic.alias_generators import to_pascal
 
 from pitwall.api_handler.models.base import F1Model
 from pitwall.api_handler.models.meeting_data import MeetingData
+from .archive_status import ArchiveStatus
 
 
 def _normalize_session_name(v: object) -> object:
@@ -80,12 +81,6 @@ RACE_ONLY_SESSIONS = frozenset(
 SessionSubTypeField = Annotated[
     SessionSubType, BeforeValidator(_normalize_session_name)
 ]
-
-
-# TODO: eventually move status to be a StrEnum to control vocab bette
-class ArchiveStatus(F1Model):
-    status: str = Field(alias="Status")
-
 
 # This is used to model SessionInfo.json information, which is more descriptive of a session than Meeting-level session info (class Session)
 class SessionInfo(F1Model):

@@ -17,6 +17,7 @@ from pitwall.api_handler.models.driver_race_info import (
     DriverRaceInfo,
     build_driver_race_info,
 )
+from pitwall.api_handler.models.lap_count import LapCount
 from pitwall.api_handler.models.meeting import Meeting
 from pitwall.api_handler.models.race_control_messages import RaceControlMessages
 from pitwall.api_handler.models.season import Season
@@ -531,6 +532,23 @@ class F1Client:
             ),
         )
         return [ContentStream.model_validate(s) for s in data.get("Streams", [])]
+
+    def get_lap_count(
+        self,
+        year: int,
+        meeting: str,
+        session: SessionSubType,
+    ) -> LapCount:
+        data = cast(
+            list[Any],
+            self._fetch_raw(
+                year=year,
+                meeting=meeting,
+                session=session,
+                file="LapCount.jsonStream",
+            ),
+        )
+        return LapCount.model_validate(data)
 
     def get_file(
         self, year: int, meeting: str, session: SessionSubType, file: str

@@ -281,5 +281,17 @@ def content_streams(
     print(df)
 
 
+@app.command()
+def lap_count(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get_lap_count(
+        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    )
+    print(df)
+
+
 if __name__ == "__main__":
     app()

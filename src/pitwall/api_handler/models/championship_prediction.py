@@ -67,7 +67,7 @@ _DriverStreamRow = dict[str, int | float | str | None]
 _TeamStreamRow = dict[str, int | float | str | None]
 
 
-def _parse_timestamp(ts: str) -> int:
+def parse_timestamp(ts: str) -> int:
     """Parse 'HH:MM:SS.fff' to milliseconds."""
     h, m, rest = ts.split(":")
     s, ms = rest.split(".")
@@ -111,7 +111,7 @@ def build_championship_prediction_stream(
     team_rows: list[_TeamStreamRow] = []
 
     for entry in entries:
-        ts_ms: int = _parse_timestamp(entry["Timestamp"])
+        ts_ms: int = parse_timestamp(entry["Timestamp"])
         data: dict[str, Any] = entry["Data"]
 
         drivers: dict[str, dict[str, Any]] = data.get("Drivers", {})

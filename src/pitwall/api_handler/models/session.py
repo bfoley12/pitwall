@@ -86,9 +86,6 @@ SessionSubTypeField = Annotated[
 class SessionInfo(F1Model):
     """Rich session info from SessionInfo.json. Composes Session + Meeting context."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     session: Session
     meeting: MeetingData
     archive_status: ArchiveStatus
@@ -115,9 +112,6 @@ class SessionInfo(F1Model):
 
 # This is used within Meeting to capture Meeting-level session info
 class Session(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
 
     key: int
     type: SessionType | None

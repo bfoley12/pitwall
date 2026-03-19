@@ -26,9 +26,6 @@ LapTime = Annotated[timedelta, BeforeValidator(parse_lap_time)]
 
 
 class LastLapTime(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     value: LapTime
     # TODO: Figure out what status maps to
     status: int
@@ -37,18 +34,12 @@ class LastLapTime(F1Model):
 
 
 class BestLapTime(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     value: LapTime
     lap: int
 
 
 # Added optionals to allow reuse in timing_stats
 class SpeedTrap(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     value: str
     status: int
     overall_fastest: bool | None
@@ -69,9 +60,6 @@ class Segment(F1Model):
 
 
 class Sector(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     stopped: bool
     previous_value: float
     segments: list[Segment]
@@ -83,17 +71,11 @@ class Sector(F1Model):
 
 
 class IntervalData(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     value: str
     catching: bool
 
 
 class TimingLine(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     racing_number: str
     position: str
     line: int
@@ -143,8 +125,5 @@ class TimingLine(F1Model):
 
 
 class TimingDataF1(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     lines: dict[str, TimingLine]
     withheld: bool

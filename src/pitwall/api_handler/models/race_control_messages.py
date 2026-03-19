@@ -65,27 +65,18 @@ class RcmCategory(FlexibleStrEnum):
 
 
 class RaceControlBase(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     utc: datetime
     lap: int | None = Field(default=None)  # Optional because of non-race flags
     message: str
 
 
 class SafetyCarMessage(RaceControlBase):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     category: Literal["SafetyCar"]
     status: SafetyCarStatus
     mode: SafetyCarMode
 
 
 class FlagMessage(RaceControlBase):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     category: Literal["Flag"]
     flag: FlagType
     scope: FlagScope
@@ -94,17 +85,11 @@ class FlagMessage(RaceControlBase):
 
 
 class DrsMessage(RaceControlBase):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     category: Literal["Drs"]
     status: DrsStatus
 
 
 class OtherMessage(RaceControlBase):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     category: Literal["Other"]
 
 
@@ -132,7 +117,4 @@ RaceControlMessage = Annotated[
 # TODO: Better parsing of messages - ie decipher potential penalties, etc
 # Probably better left to the caller to do, but we can implement that layer later
 class RaceControlMessages(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     messages: list[RaceControlMessage]

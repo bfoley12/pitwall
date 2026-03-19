@@ -8,9 +8,6 @@ from pitwall.api_handler.models.base import F1Model
 
 # TODO: Add units
 class WeatherData(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     air_temp: float
     humidity: float
     pressure: float

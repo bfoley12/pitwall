@@ -14,9 +14,6 @@ from .base import F1Model
 class DriverPrediction(F1Model):
     """Championship prediction for a single driver."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
 
     racing_number: str
     current_position: int
@@ -28,9 +25,6 @@ class DriverPrediction(F1Model):
 class TeamPrediction(F1Model):
     """Championship prediction for a single team."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
 
     team_name: str
     current_position: int
@@ -46,9 +40,6 @@ class ChampionshipPrediction(F1Model):
     standings for both drivers and constructors.
     """
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
 
     drivers: dict[str, DriverPrediction]
     teams: dict[str, TeamPrediction]

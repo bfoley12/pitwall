@@ -21,9 +21,6 @@ SESSION_KEYS = {
 
 
 class Meeting(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     code: str
     number: int
     data: MeetingData

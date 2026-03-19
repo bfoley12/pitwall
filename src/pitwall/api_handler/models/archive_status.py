@@ -6,7 +6,4 @@ from .base import F1Model
 
 # TODO: eventually move status to be a StrEnum to control vocab bette
 class ArchiveStatus(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     status: str

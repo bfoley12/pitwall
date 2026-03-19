@@ -14,9 +14,6 @@ from .timing_data import parse_lap_time
 # TODO: In the case of a DNS (ie lando (RacingNumber 1) at 2026 Shanghai Race), a lot of these models collapse to {"value": ""}
 # We could drop them (I think that decision should be made above this level)
 class RankedValue(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     position: int | None = Field(default=None)
     value: float | None = Field(default=None)
 
@@ -29,9 +26,6 @@ class RankedValue(F1Model):
 
 
 class PersonalBestLapTime(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     lap: int | None = Field(default=None)
     position: int | None = Field(default=None)
     time: timedelta | None = Field(alias="Value", default=None)
@@ -54,9 +48,6 @@ class BestSpeeds(F1Model):
 
 
 class TimingStatsLine(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     line: int
     racing_number: str
     personal_best_lap_time: PersonalBestLapTime
@@ -65,9 +56,6 @@ class TimingStatsLine(F1Model):
 
 
 class TimingStats(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     withheld: bool
     session_type: SessionType
     lines: list[TimingStatsLine]

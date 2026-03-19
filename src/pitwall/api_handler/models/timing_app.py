@@ -11,9 +11,6 @@ from .timing_data import parse_lap_time
 
 
 class Stint(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
 
     # TODO: Clarify: these may be none when the car fails to finish the lap(?)
     lap_time: timedelta | None = Field(default=None)
@@ -39,9 +36,6 @@ class Stint(F1Model):
 
 
 class TimingAppData(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
 
     racing_number: int
     line: int
@@ -51,9 +45,6 @@ class TimingAppData(F1Model):
 
 
 class TimingApp(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
 
     lines: list[TimingAppData]
 

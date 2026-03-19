@@ -7,9 +7,6 @@ from pitwall.api_handler.models.base import F1Model
 
 
 class DriverInfo(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     racing_number: int
     broadcast_name: str
     full_name: str

@@ -12,9 +12,6 @@ from pitwall.api_handler.models.country import Country
 
 # Moved out of Meeting to allow for reuse within SessionInfo
 class MeetingData(F1Model):
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, alias_generator=to_pascal
-    )
     key: int
     location: str
     official_name: str

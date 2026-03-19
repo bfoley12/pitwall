@@ -268,6 +268,17 @@ def championship_prediction_stream(
     )
     print(df)
 
+@app.command()
+def content_streams(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get_content_streams(
+        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    )
+    print(df)
+
 
 if __name__ == "__main__":
     app()

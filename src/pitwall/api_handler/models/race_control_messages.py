@@ -10,21 +10,7 @@ from pydantic.alias_generators import to_pascal
 from pitwall.api_handler.models.base import F1Model
 
 
-class FlexibleStrEnum(StrEnum):
-    """StrEnum that accepts unknown values instead of raising."""
-
-    @override
-    @classmethod
-    def _missing_(cls, value: object) -> StrEnum | None:
-        if isinstance(value, str):
-            obj = str.__new__(cls, value)
-            obj._name_ = value
-            obj._value_ = value
-            return obj
-        return None
-
-
-class FlagType(FlexibleStrEnum):
+class FlagType(StrEnum):
     BLUE = "BLUE"
     YELLOW = "YELLOW"
     DOUBLE_YELLOW = "DOUBLE YELLOW"
@@ -36,29 +22,29 @@ class FlagType(FlexibleStrEnum):
     BLACK_AND_ORANGE = "BLACK AND ORANGE"
 
 
-class FlagScope(FlexibleStrEnum):
+class FlagScope(StrEnum):
     DRIVER = "Driver"
     SECTOR = "Sector"
     TRACK = "Track"
 
 
-class SafetyCarStatus(FlexibleStrEnum):
+class SafetyCarStatus(StrEnum):
     DEPLOYED = "DEPLOYED"
     ENDING = "ENDING"
     IN_THIS_LAP = "IN THIS LAP"
 
 
-class DrsStatus(FlexibleStrEnum):
+class DrsStatus(StrEnum):
     DISABLED = "DISABLED"
     ENABLED = "ENABLED"
 
 
-class SafetyCarMode(FlexibleStrEnum):
+class SafetyCarMode(StrEnum):
     SAFETY_CAR = "SAFETY CAR"
     VIRTUAL_SAFETY_CAR = "VIRTUAL SAFETY CAR"
 
 
-class RcmCategory(FlexibleStrEnum):
+class RcmCategory(StrEnum):
     FLAG = "Flag"
     SAFETY_CAR = "SafetyCar"
     OTHER = "Other"

@@ -26,6 +26,7 @@ from pitwall.api_handler.models.session import (
     SessionInfo,
     SessionSubType,
 )
+from pitwall.api_handler.models.streams import ContentStream
 from pitwall.api_handler.models.timing_app import TimingApp
 from pitwall.api_handler.models.timing_data import TimingDataF1
 from pitwall.api_handler.models.timing_stats import TimingStats
@@ -513,6 +514,21 @@ class F1Client:
             ),
         )
         return build_championship_prediction_stream(data)
+
+    def get_content_streams(
+        self, year: int, meeting: str, session: SessionSubType,
+    ) -> list[ContentStream]:
+        data = cast(
+            dict[str, Any],
+            self._fetch_raw(
+                year=year, meeting=meeting, session=session,
+                file="ContentStreams.json",
+            )
+        )
+        return [
+            ContentStream.model_validate(s)
+            for s in data.get("Streams", [])
+        ]
 
     def get_file(
         self, year: int, meeting: str, session: SessionSubType, file: str

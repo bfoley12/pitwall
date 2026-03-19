@@ -1,14 +1,20 @@
-from pydantic import Field
+from typing import ClassVar
+
+from pydantic import ConfigDict
+from pydantic.alias_generators import to_pascal
 
 from pitwall.api_handler.models.base import F1Model
 
 
 # TODO: Add units
 class WeatherData(F1Model):
-    air_temp: float = Field(alias="AirTemp")
-    humidity: float = Field(alias="Humidity")
-    pressure: float = Field(alias="Pressure")
-    rainfall: float = Field(alias="Rainfall")
-    track_temp: float = Field(alias="TrackTemp")
-    wind_direction: int = Field(alias="WindDirection")
-    wind_speed: float = Field(alias="WindSpeed")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    air_temp: float
+    humidity: float
+    pressure: float
+    rainfall: float
+    track_temp: float
+    wind_direction: int
+    wind_speed: float

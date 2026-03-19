@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import polars as pl
 
 import typer
 
@@ -233,6 +232,7 @@ def timing_app(
     )
     print(df)
 
+
 @app.command()
 def driver_race_info(
     year: int = DEFAULTS.year,
@@ -243,6 +243,7 @@ def driver_race_info(
         year=year, meeting=meeting, session=SessionSubType.parse(session)
     )
     print(df)
+
 
 @app.command()
 def championship_prediction(
@@ -255,6 +256,7 @@ def championship_prediction(
     )
     print(df)
 
+
 @app.command()
 def championship_prediction_stream(
     year: int = DEFAULTS.year,
@@ -265,6 +267,7 @@ def championship_prediction_stream(
         year=year, meeting=meeting, session=SessionSubType.parse(session)
     )
     print(df)
+
 
 if __name__ == "__main__":
     app()

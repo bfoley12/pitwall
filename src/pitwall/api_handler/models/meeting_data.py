@@ -1,4 +1,7 @@
-from pydantic import Field
+from typing import ClassVar
+
+from pydantic import ConfigDict
+from pydantic.alias_generators import to_pascal
 
 from pitwall.api_handler.models.base import F1Model
 from pitwall.api_handler.models.circuit import Circuit
@@ -9,9 +12,12 @@ from pitwall.api_handler.models.country import Country
 
 # Moved out of Meeting to allow for reuse within SessionInfo
 class MeetingData(F1Model):
-    key: int = Field(alias="Key")
-    location: str = Field(alias="Location")
-    official_name: str = Field(alias="OfficialName")
-    name: str = Field(alias="Name")
-    country: Country = Field(alias="Country")
-    circuit: Circuit = Field(alias="Circuit")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    key: int
+    location: str
+    official_name: str
+    name: str
+    country: Country
+    circuit: Circuit

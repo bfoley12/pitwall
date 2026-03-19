@@ -1,7 +1,9 @@
 from collections.abc import Iterator
 from enum import StrEnum
+from typing import ClassVar
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
+from pydantic.alias_generators import to_pascal
 
 from pitwall.api_handler.models.base import F1Model
 
@@ -16,12 +18,18 @@ class TyreCompound(StrEnum):
 
 
 class TyreInfo(F1Model):
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
     compound: TyreCompound = Field(alias="Compound")
     new: bool = Field(alias="New")
 
 
 class CurrentTyres(F1Model):
-    tyres: dict[str, TyreInfo] = Field(alias="Tyres")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    tyres: dict[str, TyreInfo]
 
     def __getitem__(self, car_number: str) -> TyreInfo:
         return self.tyres[car_number]

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from enum import StrEnum
-from typing import Annotated, ClassVar, Literal, cast, override
+from typing import Annotated, ClassVar, cast, override
 
 from pydantic import (
     BeforeValidator,
@@ -42,7 +42,6 @@ _SESSION_ALIASES: dict[str, str] = {
 }
 
 
-
 class SessionSubType(StrEnum):
     PRACTICE_1 = "Practice 1"
     PRACTICE_2 = "Practice 2"
@@ -71,11 +70,12 @@ class SessionSubType(StrEnum):
         return result
 
 
-
-RACE_ONLY_SESSIONS = frozenset({
-    SessionSubType.RACE,
-    SessionSubType.SPRINT,
-})
+RACE_ONLY_SESSIONS = frozenset(
+    {
+        SessionSubType.RACE,
+        SessionSubType.SPRINT,
+    }
+)
 
 SessionSubTypeField = Annotated[
     SessionSubType, BeforeValidator(_normalize_session_name)
@@ -91,9 +91,12 @@ class ArchiveStatus(F1Model):
 class SessionInfo(F1Model):
     """Rich session info from SessionInfo.json. Composes Session + Meeting context."""
 
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
     session: Session
-    meeting: MeetingData = Field(alias="Meeting")
-    archive_status: ArchiveStatus = Field(alias="ArchiveStatus")
+    meeting: MeetingData
+    archive_status: ArchiveStatus
 
     @model_validator(mode="before")
     @classmethod

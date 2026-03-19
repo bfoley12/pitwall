@@ -1,8 +1,9 @@
 import re
 from datetime import timedelta
-from typing import Annotated
+from typing import Annotated, ClassVar
 
-from pydantic import BeforeValidator, Field
+from pydantic import BeforeValidator, ConfigDict, Field
+from pydantic.alias_generators import to_pascal
 from pydantic.functional_validators import field_validator
 
 from pitwall.api_handler.models.base import F1Model
@@ -25,24 +26,33 @@ LapTime = Annotated[timedelta, BeforeValidator(parse_lap_time)]
 
 
 class LastLapTime(F1Model):
-    value: LapTime = Field(alias="Value")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    value: LapTime
     # TODO: Figure out what status maps to
-    status: int = Field(alias="Status")
-    overall_fastest: bool = Field(alias="OverallFastest")
-    perosnal_fastest: bool = Field(alias="PersonalFastest")
+    status: int
+    overall_fastest: bool
+    perosnal_fastest: bool
 
 
 class BestLapTime(F1Model):
-    value: LapTime = Field(alias="Value")
-    lap: int = Field(alias="Lap")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    value: LapTime
+    lap: int
 
 
 # Added optionals to allow reuse in timing_stats
 class SpeedTrap(F1Model):
-    value: str = Field(alias="Value")
-    status: int = Field(alias="Status")
-    overall_fastest: bool | None = Field(alias="OverallFastest")
-    personal_fastest: bool | None = Field(alias="PersonalFastest")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    value: str
+    status: int
+    overall_fastest: bool | None
+    personal_fastest: bool | None
 
 
 class Speeds(F1Model):
@@ -59,51 +69,56 @@ class Segment(F1Model):
 
 
 class Sector(F1Model):
-    stopped: bool = Field(alias="Stopped")
-    previous_value: float = Field(alias="PreviousValue")
-    segments: list[Segment] = Field(alias="Segments")
-    value: float = Field(alias="Value")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    stopped: bool
+    previous_value: float
+    segments: list[Segment]
+    value: float
     # TODO: Figure out how status encodes
-    status: int = Field(alias="Status")
-    overall_fastest: bool = Field(alias="OverallFastest")
-    personal_fastest: bool = Field(alias="PersonalFastest")
+    status: int
+    overall_fastest: bool
+    personal_fastest: bool
 
 
 class IntervalData(F1Model):
-    value: str = Field(alias="Value")
-    catching: bool = Field(alias="Catching")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    value: str
+    catching: bool
 
 
 class TimingLine(F1Model):
-    racing_number: str = Field(alias="RacingNumber")
-    position: str = Field(alias="Position")
-    line: int = Field(alias="Line")
-    show_position: bool = Field(alias="ShowPosition")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    racing_number: str
+    position: str
+    line: int
+    show_position: bool
 
     # Practice fields
-    time_diff_to_fastest: float | int | None = Field(None, alias="TimeDiffToFastest")
-    time_diff_to_position_ahead: float | int | None = Field(
-        None, alias="TimeDiffToPositionAhead"
-    )
+    time_diff_to_fastest: float | int | None
+    time_diff_to_position_ahead: float | int | None = Field(default=None)
 
     # Race fields
-    gap_to_leader: float | int | None = Field(None, alias="GapToLeader")
-    interval_to_position_ahead: IntervalData | None = Field(
-        None, alias="IntervalToPositionAhead"
-    )
+    gap_to_leader: float | int | None = Field(default=None)
+    interval_to_position_ahead: IntervalData | None = Field(default=None)
 
     # Common
-    retired: bool = Field(alias="Retired")
-    in_pit: bool = Field(alias="InPit")
-    pit_out: bool = Field(alias="PitOut")
-    stopped: bool = Field(alias="Stopped")
-    status: int = Field(alias="Status")
-    number_of_laps: int = Field(alias="NumberOfLaps")
-    number_of_pit_stops: int = Field(alias="NumberOfPitStops")
-    sectors: list[Sector] = Field(alias="Sectors")
-    speeds: Speeds = Field(alias="Speeds")
-    best_lap_time: BestLapTime = Field(alias="BestLapTime")
-    last_lap_time: LastLapTime = Field(alias="LastLapTime")
+    retired: bool
+    in_pit: bool
+    pit_out: bool
+    stopped: bool
+    status: int
+    number_of_laps: int
+    number_of_pit_stops: int
+    sectors: list[Sector]
+    speeds: Speeds
+    best_lap_time: BestLapTime
+    last_lap_time: LastLapTime
 
     @field_validator(
         "time_diff_to_fastest",
@@ -128,5 +143,8 @@ class TimingLine(F1Model):
 
 
 class TimingDataF1(F1Model):
-    lines: dict[str, TimingLine] = Field(alias="Lines")
-    withheld: bool = Field(alias="Withheld")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    lines: dict[str, TimingLine]
+    withheld: bool

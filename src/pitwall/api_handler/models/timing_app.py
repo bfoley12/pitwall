@@ -37,6 +37,7 @@ class Stint(F1Model):
             return parse_lap_time(v)
         return v
 
+
 class TimingAppData(F1Model):
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True, alias_generator=to_pascal

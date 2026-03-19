@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, Literal, override
+from typing import Annotated, ClassVar, Literal, override
 
-from pydantic import Discriminator, Field, Tag
+from pydantic import ConfigDict, Discriminator, Field, Tag
+from pydantic.alias_generators import to_pascal
 
 from pitwall.api_handler.models.base import F1Model
 
@@ -64,34 +65,47 @@ class RcmCategory(FlexibleStrEnum):
 
 
 class RaceControlBase(F1Model):
-    utc: datetime = Field(alias="Utc")
-    lap: int | None = Field(
-        alias="Lap", default=None
-    )  # Optional because of non-race flags
-    message: str = Field(alias="Message")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    utc: datetime
+    lap: int | None = Field(default=None)  # Optional because of non-race flags
+    message: str
 
 
 class SafetyCarMessage(RaceControlBase):
-    category: Literal["SafetyCar"] = Field(alias="Category")
-    status: SafetyCarStatus = Field(alias="Status")
-    mode: SafetyCarMode = Field(alias="Mode")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    category: Literal["SafetyCar"]
+    status: SafetyCarStatus
+    mode: SafetyCarMode
 
 
 class FlagMessage(RaceControlBase):
-    category: Literal["Flag"] = Field(alias="Category")
-    flag: FlagType = Field(alias="Flag")
-    scope: FlagScope = Field(alias="Scope")
-    sector: int | None = Field(None, alias="Sector")
-    racing_number: str | None = Field(None, alias="RacingNumber")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    category: Literal["Flag"]
+    flag: FlagType
+    scope: FlagScope
+    sector: int | None
+    racing_number: str | None
 
 
 class DrsMessage(RaceControlBase):
-    category: Literal["Drs"] = Field(alias="Category")
-    status: DrsStatus = Field(alias="Status")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    category: Literal["Drs"]
+    status: DrsStatus
 
 
 class OtherMessage(RaceControlBase):
-    category: Literal["Other"] = Field(alias="Category")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    category: Literal["Other"]
 
 
 def _discriminate_rcm(data: dict[str, object]) -> str:
@@ -118,4 +132,7 @@ RaceControlMessage = Annotated[
 # TODO: Better parsing of messages - ie decipher potential penalties, etc
 # Probably better left to the caller to do, but we can implement that layer later
 class RaceControlMessages(F1Model):
-    messages: list[RaceControlMessage] = Field(alias="Messages")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    messages: list[RaceControlMessage]

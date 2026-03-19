@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import override
+from typing import ClassVar, override
 
-from pydantic import Field, model_validator
+from pydantic import ConfigDict, model_validator
+from pydantic.alias_generators import to_pascal
 
 from .base import F1Model
 from .circuit import Circuit
@@ -20,10 +21,13 @@ SESSION_KEYS = {
 
 
 class Meeting(F1Model):
-    code: str = Field(alias="Code")
-    number: int = Field(alias="Number")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    code: str
+    number: int
     data: MeetingData
-    sessions: list[Session] = Field(alias="Sessions")
+    sessions: list[Session]
 
     @model_validator(mode="before")
     @classmethod

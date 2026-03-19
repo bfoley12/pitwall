@@ -58,7 +58,7 @@ class TimingStatsLine(F1Model):
         populate_by_name=True, alias_generator=to_pascal
     )
     line: int
-    car_number: str = Field(alias="RacingNumber")
+    racing_number: str
     personal_best_lap_time: PersonalBestLapTime
     best_sectors: list[RankedValue]
     best_speeds: BestSpeeds

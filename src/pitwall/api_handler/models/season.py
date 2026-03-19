@@ -1,6 +1,7 @@
-from typing import override
+from typing import ClassVar, override
 
-from pydantic import Field, model_validator
+from pydantic import ConfigDict, model_validator
+from pydantic.alias_generators import to_pascal
 
 from pitwall.api_handler.models.base import F1Model
 
@@ -8,8 +9,11 @@ from .meeting import Meeting
 
 
 class Season(F1Model):
-    year: int = Field(alias="Year")
-    meetings: list[Meeting] = Field(alias="Meetings")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, alias_generator=to_pascal
+    )
+    year: int
+    meetings: list[Meeting]
 
     @model_validator(mode="after")
     def sort_meetings(self) -> "Season":

@@ -8,7 +8,6 @@ from pydantic.alias_generators import to_pascal
 
 from .base import F1Model
 
-
 # ── Keyframe (ChampionshipPrediction.json) ────────────────────────
 
 
@@ -151,10 +150,6 @@ def build_championship_prediction_stream(
             )
 
     return ChampionshipPredictionStream(
-        drivers=pl.DataFrame(
-            driver_rows, schema=_DRIVER_STREAM_SCHEMA
-        ),
-        teams=pl.DataFrame(
-            team_rows, schema=_TEAM_STREAM_SCHEMA
-        ),
+        drivers=pl.DataFrame(driver_rows, schema=_DRIVER_STREAM_SCHEMA),
+        teams=pl.DataFrame(team_rows, schema=_TEAM_STREAM_SCHEMA),
     )

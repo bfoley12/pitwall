@@ -6,7 +6,7 @@ from .base import F1Model
 from .session import SessionType
 from .timing_data import parse_lap_time
 
-# TODO: Unify with timing_data? I modeled it by file, but there is significant overlap
+# TODO: Unify with timing_data and timing_app? I modeled it by file, but there is significant overlap
 
 
 # TODO: In the case of a DNS (ie lando (RacingNumber 1) at 2026 Shanghai Race), a lot of these models collapse to {"value": ""}

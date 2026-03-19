@@ -7,7 +7,7 @@ from pydantic.functional_validators import field_validator
 
 from pitwall.api_handler.models.base import F1Model
 
-# TODO: Unify with timing_stats? I modeled it by file, but there is significant overlap
+# TODO: Unify with timing_stats and timing_app? I modeled it by file, but there is significant overlap
 
 
 def parse_lap_time(value: str) -> timedelta:

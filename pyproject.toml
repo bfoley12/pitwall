@@ -3,7 +3,7 @@ name = "f1-stats"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
     "fastf1>=3.8.1",
     "httpx>=0.28.1",
@@ -14,6 +14,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "basedpyright>=1.38.3",
     "ruff>=0.15.6",
 ]
 

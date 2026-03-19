@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import re
 from enum import IntEnum
 from typing import Any, ClassVar
@@ -8,6 +6,7 @@ import polars as pl
 from pydantic import ConfigDict
 
 from .base import F1Model
+from .championship_prediction import parse_timestamp
 
 
 class Catching(IntEnum):
@@ -76,13 +75,6 @@ def _parse_interval(raw: str | None) -> float | None:
     return None
 
 
-def _parse_timestamp(ts: str) -> int:
-    """Parse 'HH:MM:SS.fff' to milliseconds."""
-    h, m, rest = ts.split(":")
-    s, ms = rest.split(".")
-    return int(h) * 3_600_000 + int(m) * 60_000 + int(s) * 1_000 + int(ms)
-
-
 _GRID_SCHEMA: dict[str, pl.DataType] = {
     "position": pl.UInt8(),
     "racing_number": pl.Utf8(),
@@ -136,7 +128,7 @@ def _build_event_stream(
     rows: list[_StreamRow] = []
 
     for entry in entries:
-        ts_ms: int = _parse_timestamp(entry["Timestamp"])
+        ts_ms: int = parse_timestamp(entry["Timestamp"])
         data: dict[str, dict[str, Any]] = entry["Data"]
 
         for racing_number, update in data.items():

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any, ClassVar
 
 import polars as pl
@@ -39,12 +37,6 @@ class ChampionshipPrediction(F1Model):
 
     drivers: dict[str, DriverPrediction]
     teams: dict[str, TeamPrediction]
-
-    def driver(self, racing_number: str) -> DriverPrediction:
-        return self.drivers[racing_number]
-
-    def team(self, team_key: str) -> TeamPrediction:
-        return self.teams[team_key]
 
 
 # ── Stream (ChampionshipPrediction.jsonStream) ────────────────────

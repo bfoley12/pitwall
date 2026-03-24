@@ -1,18 +1,18 @@
-from typing import override
+from typing import Any, ClassVar, override
 
 from pydantic import model_validator
 
-from pitwall.api_handler.models.base import F1Model
+from pitwall.api_handler.models.base import F1DataContainer, F1Frame
 
 from .meeting import Meeting
 
 
-class Season(F1Model):
+class SeasonKeyframe(F1Frame):
     year: int
     meetings: list[Meeting]
 
     @model_validator(mode="after")
-    def sort_meetings(self) -> "Season":
+    def sort_meetings(self) -> "SeasonKeyframe":
         self.meetings.sort(key=lambda m: m.number)
         return self
 
@@ -56,3 +56,18 @@ class Season(F1Model):
         meetings_str = "\n".join(str(meeting) for meeting in self.meetings)
         res += f"{meetings_str}"
         return res
+
+
+class Season(F1DataContainer):
+    KEYFRAME_FILE: ClassVar[str | None] = "Index.json"
+
+    keyframe: SeasonKeyframe
+
+    @model_validator(mode="before")
+    @classmethod
+    def _wrap(cls, raw: Any) -> dict[str, Any]:
+        response = {}
+        if isinstance(raw, dict) and "keyframe" not in raw:
+            response["keyframe"] = raw
+            return response
+        return raw

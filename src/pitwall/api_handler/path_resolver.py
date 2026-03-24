@@ -51,8 +51,8 @@ class PathResolver(BaseModel):
         if self.year is None:
             raise ValueError("year required to get meeting")
         response = httpx.get("/".join([self._slug, str(self.year), "Index.json"]))
-        year_info = Season.model_validate(response.json())
-        meeting_instance = year_info.get_meeting(meeting)
+        season = Season.model_validate(response.json())
+        meeting_instance = season.keyframe.get_meeting(meeting)
         return meeting_instance
 
     @property

@@ -1,55 +1,73 @@
 from typing import Any, ClassVar
 
 import polars as pl
-from pydantic import ConfigDict, model_validator
+from pydantic import model_validator
 
-from .base import F1Model
-from .championship_prediction import parse_timestamp
+from .base import F1DataContainer, F1Frame, F1Stream
 
 
-class LapCount(F1Model):
-    """Race lap counter from LapCount.jsonStream.
+class LapCountStream(F1Stream):
+    """Lap counter stream — leader S/F crossings.
 
-    Attributes:
-        total_laps: Total laps in the race (e.g. 56).
-        current_lap: Final lap reached.
-        laps: Mapping of lap number to the session elapsed time
-            when the leader crossed the start/finish line.
+    frame columns: lap (UInt8), timestamp (Duration[ms])
     """
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
+    SCHEMA: ClassVar[dict[str, pl.DataType]] = {
+        "lap": pl.UInt8(),
+        "timestamp": pl.Duration("ms"),
+    }
 
-    total_laps: int
-    current_lap: int
-    laps: pl.DataFrame
+    total_laps: int = 0
+    current_lap: int = 0
+
+    @classmethod
+    def _extract_rows(
+        cls, timestamp_ms: int, data: dict[str, Any]
+    ) -> list[dict[str, Any]]:
+        return [
+            {
+                "lap": data["CurrentLap"],
+                "timestamp": timestamp_ms,
+            }
+        ]
 
     @model_validator(mode="before")
     @classmethod
-    def from_stream(cls, entries: list[dict[str, Any]]) -> dict[str, Any]:
-        """Build from decoded LapCount.jsonStream entries."""
+    def _from_entries(cls, raw: Any) -> Any:
+        if not isinstance(raw, list) or not raw:
+            return raw
+
         total_laps: int = 0
-        rows: list[dict[str, int]] = []
+        for entry in raw:
+            if "TotalLaps" in entry["Data"]:
+                total_laps = entry["Data"]["TotalLaps"]
 
-        for entry in entries:
-            data: dict[str, Any] = entry["Data"]
-            if "TotalLaps" in data:
-                total_laps = data["TotalLaps"]
-            rows.append(
-                {
-                    "lap": data["CurrentLap"],
-                    "timestamp": parse_timestamp(entry["Timestamp"]),
-                }
-            )
-
-        laps = pl.DataFrame(
-            rows,
-            schema={"lap": pl.UInt8(), "timestamp": pl.Duration("ms")},
-        )
-
-        current_lap = laps["lap"].max() if len(laps) > 0 else 0
+        frame = cls._build_dataframe(raw)
+        current_lap = frame["lap"].max() if len(frame) > 0 else 0
 
         return {
+            "data": frame,
             "total_laps": total_laps,
             "current_lap": current_lap,
-            "laps": laps,
         }
+
+
+class LapCountKeyframe(F1Frame):
+    current_lap: int
+    total_laps: int
+
+
+class LapCount(F1DataContainer):
+    """Race lap counter.
+
+    keyframe: Final state — current_lap and total_laps.
+    stream.frame: Lap number + timestamp of each leader S/F crossing.
+    stream.total_laps: Total laps in the race.
+    stream.current_lap: Final lap reached.
+    """
+
+    KEYFRAME_FILE: ClassVar[str | None] = "LapCount.json"
+    STREAM_FILE: ClassVar[str | None] = "LapCount.jsonStream"
+
+    keyframe: LapCountKeyframe | None = None
+    stream: LapCountStream | None = None

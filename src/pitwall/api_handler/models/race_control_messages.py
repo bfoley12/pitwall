@@ -1,10 +1,11 @@
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, Literal
+from typing import Annotated, Any, ClassVar, Literal
 
-from pydantic import Discriminator, Field, Tag
+import polars as pl
+from pydantic import Discriminator, Field, Tag, model_validator
 
-from pitwall.api_handler.models.base import F1Model
+from .base import F1DataContainer, F1Model, F1Stream
 
 
 class FlagType(StrEnum):
@@ -44,12 +45,16 @@ class SafetyCarMode(StrEnum):
 class RcmCategory(StrEnum):
     FLAG = "Flag"
     SAFETY_CAR = "SafetyCar"
+    DRS = "Drs"
     OTHER = "Other"
+
+
+# ── Message types ─────────────────────────────────────
 
 
 class RaceControlBase(F1Model):
     utc: datetime
-    lap: int | None = Field(default=None)  # Optional because of non-race flags
+    lap: int | None = Field(default=None)
     message: str
 
 
@@ -63,8 +68,8 @@ class FlagMessage(RaceControlBase):
     category: Literal["Flag"]
     flag: FlagType
     scope: FlagScope
-    sector: int | None
-    racing_number: str | None
+    sector: int | None = None
+    racing_number: str | None = None
 
 
 class DrsMessage(RaceControlBase):
@@ -97,7 +102,79 @@ RaceControlMessage = Annotated[
 ]
 
 
-# TODO: Better parsing of messages - ie decipher potential penalties, etc
-# Probably better left to the caller to do, but we can implement that layer later
-class RaceControlMessages(F1Model):
+# ── Keyframe ──────────────────────────────────────────
+
+
+class RaceControlMessagesKeyframe(F1Model):
     messages: list[RaceControlMessage]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _wrap(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "Messages" in data:
+            return {"messages": data["Messages"]}
+        return data
+
+
+# ── Stream ────────────────────────────────────────────
+
+
+class RaceControlMessagesStream(F1Stream):
+    """Race control messages as a time series."""
+
+    SCHEMA: ClassVar[dict[str, pl.DataType]] = {
+        "timestamp": pl.Duration("ms"),
+        "utc": pl.Utf8(),
+        "category": pl.Utf8(),
+        "message": pl.Utf8(),
+        "lap": pl.UInt8(),
+        "flag": pl.Utf8(),
+        "scope": pl.Utf8(),
+        "sector": pl.UInt8(),
+        "racing_number": pl.Utf8(),
+        "status": pl.Utf8(),
+        "mode": pl.Utf8(),
+    }
+
+    @classmethod
+    def _extract_rows(
+        cls, timestamp_ms: int, data: dict[str, Any]
+    ) -> list[dict[str, Any]]:
+        raw_msgs = data.get("Messages", {})
+
+        # First entry is a list, subsequent are dicts keyed by index
+        messages = raw_msgs if isinstance(raw_msgs, list) else list(raw_msgs.values())
+
+        return [
+            {
+                "timestamp": timestamp_ms,
+                "utc": msg.get("Utc"),
+                "category": msg.get("Category"),
+                "message": msg.get("Message"),
+                "lap": msg.get("Lap"),
+                "flag": msg.get("Flag"),
+                "scope": msg.get("Scope"),
+                "sector": msg.get("Sector"),
+                "racing_number": msg.get("RacingNumber"),
+                "status": msg.get("Status"),
+                "mode": msg.get("Mode"),
+            }
+            for msg in messages
+        ]
+
+
+# ── Container ─────────────────────────────────────────
+
+
+class RaceControlMessages(F1DataContainer):
+    """Race control messages — flags, penalties, safety car, DRS.
+
+    keyframe: Typed discriminated union of message objects.
+    stream.frame: Flat DataFrame of all messages for time-series analysis.
+    """
+
+    KEYFRAME_FILE: ClassVar[str | None] = "RaceControlMessages.json"
+    STREAM_FILE: ClassVar[str | None] = "RaceControlMessages.jsonStream"
+
+    keyframe: RaceControlMessagesKeyframe | None = None
+    stream: RaceControlMessagesStream | None = None

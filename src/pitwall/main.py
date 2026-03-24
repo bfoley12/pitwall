@@ -3,7 +3,29 @@ from dataclasses import dataclass
 import typer
 
 from pitwall.api_handler.f1_client import F1Client
-from pitwall.api_handler.models.session import SessionSubType
+from pitwall.api_handler.models.archive_status import ArchiveStatus
+from pitwall.api_handler.models.car_data import CarData
+from pitwall.api_handler.models.championship_prediction import ChampionshipPrediction
+from pitwall.api_handler.models.content_streams import ContentStreams
+from pitwall.api_handler.models.current_tyres import CurrentTyres
+from pitwall.api_handler.models.driver_list import DriverList
+from pitwall.api_handler.models.driver_race_info import DriverRaceInfo
+from pitwall.api_handler.models.lap_count import LapCount
+from pitwall.api_handler.models.lap_series import LapSeries
+from pitwall.api_handler.models.pit_lane_time_collection import PitLaneTimeCollection
+from pitwall.api_handler.models.pit_stop import PitStop
+from pitwall.api_handler.models.pit_stop_series import PitStopSeries
+from pitwall.api_handler.models.position import Position
+from pitwall.api_handler.models.race_control_messages import RaceControlMessages
+from pitwall.api_handler.models.season import Season
+from pitwall.api_handler.models.session import SessionIndex, SessionSubType
+from pitwall.api_handler.models.session_info import SessionInfo
+from pitwall.api_handler.models.timing_app_data import TimingAppData
+from pitwall.api_handler.models.timing_data import TimingDataF1
+from pitwall.api_handler.models.timing_stats import TimingStats
+from pitwall.api_handler.models.track_status import TrackStatus
+from pitwall.api_handler.models.tyre_stint_series import TyreStintSeries
+from pitwall.api_handler.models.weather_data import WeatherData
 
 app = typer.Typer()
 
@@ -21,26 +43,13 @@ client = F1Client()
 
 @app.command()
 def season(year: int = DEFAULTS.year) -> None:
-    print(client.get_season(year=year))
+    print(client.get(model=Season, year=year))
 
 
 @app.command()
 def meeting(year: int = DEFAULTS.year, name: str = DEFAULTS.meeting) -> None:
-    res = client.get_meeting(year=year, meeting=name)
+    res = client.get(model=Season, year=year).keyframe.get_meeting(name)
     print(res.sessions[0])
-
-
-@app.command()
-def session(
-    year: int = DEFAULTS.year,
-    meeting: str = DEFAULTS.meeting,
-    name: str = DEFAULTS.session,
-) -> None:
-    print(
-        client.get_session(
-            year=year, meeting=meeting, session=SessionSubType.parse(name)
-        )
-    )
 
 
 @app.command()
@@ -50,8 +59,27 @@ def session_index(
     name: str = DEFAULTS.session,
 ) -> None:
     print(
-        client.get_session_feeds(
-            year=year, meeting=meeting, session=SessionSubType.parse(name)
+        client.get(
+            model=SessionIndex,
+            year=year,
+            meeting=meeting,
+            session=SessionSubType.parse(name),
+        )
+    )
+
+
+@app.command()
+def session_info(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    name: str = DEFAULTS.session,
+) -> None:
+    print(
+        client.get(
+            model=SessionInfo,
+            year=year,
+            meeting=meeting,
+            session=SessionSubType.parse(name),
         )
     )
 
@@ -63,8 +91,27 @@ def timing(
     session: str = DEFAULTS.session,
 ) -> None:
     print(
-        client.get_timing(
-            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        client.get(
+            model=TimingDataF1,
+            year=year,
+            meeting=meeting,
+            session=SessionSubType.parse(session),
+        )
+    )
+
+
+@app.command()
+def timing_app(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    print(
+        client.get(
+            model=TimingAppData,
+            year=year,
+            meeting=meeting,
+            session=SessionSubType.parse(session),
         )
     )
 
@@ -76,8 +123,11 @@ def timing_stats(
     session: str = DEFAULTS.session,
 ) -> None:
     print(
-        client.get_timing_stats(
-            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        client.get(
+            model=TimingStats,
+            year=year,
+            meeting=meeting,
+            session=SessionSubType.parse(session),
         )
     )
 
@@ -88,8 +138,8 @@ def car_data(
     meeting: str = DEFAULTS.meeting,
     session: str = DEFAULTS.session,
 ) -> None:
-    df = client.get_car_data(
-        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    df = client.get(
+        model=CarData, year=year, meeting=meeting, session=SessionSubType.parse(session)
     )
     print(df)
 
@@ -101,21 +151,11 @@ def position_data(
     session: str = DEFAULTS.session,
 ) -> None:
     print(
-        client.get_position_data(
-            year=year, meeting=meeting, session=SessionSubType.parse(session)
-        )
-    )
-
-
-@app.command()
-def driver_info(
-    year: int = DEFAULTS.year,
-    meeting: str = DEFAULTS.meeting,
-    session: str = DEFAULTS.session,
-) -> None:
-    print(
-        client.get_driver_info(
-            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        client.get(
+            model=Position,
+            year=year,
+            meeting=meeting,
+            session=SessionSubType.parse(session),
         )
     )
 
@@ -127,47 +167,43 @@ def weather_data(
     session: str = DEFAULTS.session,
 ) -> None:
     print(
-        client.get_weather_data(
-            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        client.get(
+            model=WeatherData,
+            year=year,
+            meeting=meeting,
+            session=SessionSubType.parse(session),
         )
     )
 
 
 @app.command()
-def weather_data_series(
+def current_tyres(
     year: int = DEFAULTS.year,
     meeting: str = DEFAULTS.meeting,
     session: str = DEFAULTS.session,
 ) -> None:
     print(
-        client.get_weather_data_series(
-            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        client.get(
+            model=CurrentTyres,
+            year=year,
+            meeting=meeting,
+            session=SessionSubType.parse(session),
         )
     )
 
 
 @app.command()
-def get_current_tyre(
+def tyre_stints(
     year: int = DEFAULTS.year,
     meeting: str = DEFAULTS.meeting,
     session: str = DEFAULTS.session,
 ) -> None:
     print(
-        client.get_current_tyre(
-            year=year, meeting=meeting, session=SessionSubType.parse(session)
-        )
-    )
-
-
-@app.command()
-def get_tyre_stints(
-    year: int = DEFAULTS.year,
-    meeting: str = DEFAULTS.meeting,
-    session: str = DEFAULTS.session,
-) -> None:
-    print(
-        client.get_tyre_stints(
-            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        client.get(
+            model=TyreStintSeries,
+            year=year,
+            meeting=meeting,
+            session=SessionSubType.parse(session),
         )
     )
 
@@ -179,8 +215,11 @@ def get_rcm(
     session: str = DEFAULTS.session,
 ) -> None:
     print(
-        client.get_rcm(
-            year=year, meeting=meeting, session=SessionSubType.parse(session)
+        client.get(
+            model=RaceControlMessages,
+            year=year,
+            meeting=meeting,
+            session=SessionSubType.parse(session),
         )
     )
 
@@ -191,20 +230,53 @@ def track_status(
     meeting: str = DEFAULTS.meeting,
     session: str = DEFAULTS.session,
 ) -> None:
-    df = client.get_track_status(
-        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    df = client.get(
+        model=TrackStatus,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
     )
     print(df)
 
 
 @app.command()
-def pitstops(
+def pit_lane_time(
     year: int = DEFAULTS.year,
     meeting: str = DEFAULTS.meeting,
     session: str = DEFAULTS.session,
 ) -> None:
-    df = client.get_pit_stops(
-        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    df = client.get(
+        model=PitLaneTimeCollection,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
+    )
+    print(df)
+
+
+@app.command()
+def pit_stops(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get(
+        model=PitStop, year=year, meeting=meeting, session=SessionSubType.parse(session)
+    )
+    print(df)
+
+
+@app.command()
+def pit_stop_series(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get(
+        model=PitStopSeries,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
     )
     print(df)
 
@@ -215,20 +287,11 @@ def lap_series(
     meeting: str = DEFAULTS.meeting,
     session: str = DEFAULTS.session,
 ) -> None:
-    df = client.get_lap_series(
-        year=year, meeting=meeting, session=SessionSubType.parse(session)
-    )
-    print(df)
-
-
-@app.command()
-def timing_app(
-    year: int = DEFAULTS.year,
-    meeting: str = DEFAULTS.meeting,
-    session: str = DEFAULTS.session,
-) -> None:
-    df = client.get_timing_app(
-        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    df = client.get(
+        model=LapSeries,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
     )
     print(df)
 
@@ -239,8 +302,26 @@ def driver_race_info(
     meeting: str = DEFAULTS.meeting,
     session: str = DEFAULTS.session,
 ) -> None:
-    df = client.get_driver_race_info(
-        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    df = client.get(
+        model=DriverRaceInfo,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
+    )
+    print(df)
+
+
+@app.command()
+def driver_list(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get(
+        model=DriverList,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
     )
     print(df)
 
@@ -251,20 +332,11 @@ def championship_prediction(
     meeting: str = DEFAULTS.meeting,
     session: str = DEFAULTS.session,
 ) -> None:
-    df = client.get_championship_prediction(
-        year=year, meeting=meeting, session=SessionSubType.parse(session)
-    )
-    print(df)
-
-
-@app.command()
-def championship_prediction_stream(
-    year: int = DEFAULTS.year,
-    meeting: str = DEFAULTS.meeting,
-    session: str = DEFAULTS.session,
-) -> None:
-    df = client.get_championship_prediction_stream(
-        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    df = client.get(
+        model=ChampionshipPrediction,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
     )
     print(df)
 
@@ -275,8 +347,11 @@ def content_streams(
     meeting: str = DEFAULTS.meeting,
     session: str = DEFAULTS.session,
 ) -> None:
-    df = client.get_content_streams(
-        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    df = client.get(
+        model=ContentStreams,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
     )
     print(df)
 
@@ -287,8 +362,26 @@ def lap_count(
     meeting: str = DEFAULTS.meeting,
     session: str = DEFAULTS.session,
 ) -> None:
-    df = client.get_lap_count(
-        year=year, meeting=meeting, session=SessionSubType.parse(session)
+    df = client.get(
+        model=LapCount,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
+    )
+    print(df)
+
+
+@app.command()
+def archive_status(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get(
+        model=ArchiveStatus,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
     )
     print(df)
 

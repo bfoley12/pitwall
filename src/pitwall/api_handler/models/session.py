@@ -10,10 +10,7 @@ from pydantic import (
     model_validator,
 )
 
-from pitwall.api_handler.models.base import F1Model
-from pitwall.api_handler.models.meeting_data import MeetingData
-
-from .archive_status import ArchiveStatus
+from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model
 
 
 def _normalize_session_name(v: object) -> object:
@@ -81,8 +78,6 @@ SessionSubTypeField = Annotated[
 ]
 
 
-
-
 # This is used within Meeting to capture Meeting-level session info
 class Session(F1Model):
     key: int
@@ -109,32 +104,6 @@ class Session(F1Model):
             raise ValueError("Session has no path")
         return self.path.split("/")[2]
 
-# This is used to model SessionInfo.json information, which is more descriptive of a session than Meeting-level session info (class Session)
-class SessionInfo(F1Model):
-    """Rich session info from SessionInfo.json. Composes Session + Meeting context."""
-
-    session: Session
-    meeting: MeetingData
-    archive_status: ArchiveStatus
-
-    @model_validator(mode="before")
-    @classmethod
-    def _extract_session(cls, data: dict[str, object]) -> dict[str, object]:
-        """Session fields live at the root level alongside Meeting/ArchiveStatus.
-        Extract them into a nested 'session' key so Pydantic validates Session separately."""
-        session_keys = {
-            "Key",
-            "Type",
-            "Number",
-            "Name",
-            "StartDate",
-            "EndDate",
-            "GmtOffset",
-            "Path",
-        }
-        session_data = {k: v for k, v in data.items() if k in session_keys}
-        data["session"] = session_data
-        return data
 
 class FeedName(StrEnum):
     SESSION_INFO = "SessionInfo"
@@ -225,7 +194,7 @@ _FEED_MAP: dict[str, str] = {
 _SENTINEL = object()
 
 
-class SessionIndex(F1Model):
+class SessionIndexKeyframe(F1Frame):
     model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
     # Metadata
@@ -317,3 +286,9 @@ class SessionIndex(F1Model):
         if extra:
             set_feeds["extra"] = extra
         return f"SessionFeeds({set_feeds})"
+
+
+class SessionIndex(F1DataContainer):
+    KEYFRAME_FILE: ClassVar[str | None] = "Index.json"
+
+    keyframe: SessionIndexKeyframe

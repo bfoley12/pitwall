@@ -1,9 +1,15 @@
+from collections.abc import ItemsView
+from typing import Any, ClassVar
+
+import polars as pl
 from pydantic import Field, model_validator
 
-from pitwall.api_handler.models.base import F1Model
+from .base import F1DataContainer, F1Model, F1Stream
 
 
 class DriverInfo(F1Model):
+    """Static driver information from the keyframe."""
+
     racing_number: int
     broadcast_name: str
     full_name: str
@@ -15,11 +21,7 @@ class DriverInfo(F1Model):
     last_name: str
     reference: str
     headshot_url: str | None = Field(default=None)
-
-    # Newer codes
     public_id_right: str | None = Field(default=None)
-
-    # Older codes
     country_code: str | None = Field(default=None)
 
     @property
@@ -27,10 +29,58 @@ class DriverInfo(F1Model):
         return self.team_colour
 
 
-class DriverList(F1Model):
+class DriverListKeyframe(F1Model):
+    """All drivers keyed by car number."""
+
     drivers: dict[str, DriverInfo]
+
+    def __getitem__(self, car_number: str) -> DriverInfo:
+        return self.drivers[car_number]
+
+    def items(self) -> ItemsView[str, DriverInfo]:
+        return self.drivers.items()
 
     @model_validator(mode="before")
     @classmethod
-    def _wrap(cls, data: dict[str, object]) -> dict[str, object]:
-        return {"drivers": data}
+    def _wrap(cls, data: Any) -> dict[str, Any]:
+        if isinstance(data, dict) and "drivers" not in data:
+            return {"drivers": data}
+        return data
+
+
+class DriverListStream(F1Stream):
+    """Position (Line) updates per car over time."""
+
+    SCHEMA: ClassVar[dict[str, pl.DataType]] = {
+        "timestamp": pl.Duration("ms"),
+        "car_number": pl.Utf8(),
+        "line": pl.UInt8(),
+    }
+
+    @classmethod
+    def _extract_rows(
+        cls, timestamp_ms: int, data: dict[str, Any]
+    ) -> list[dict[str, Any]]:
+        return [
+            {
+                "timestamp": timestamp_ms,
+                "car_number": car_number,
+                "line": update.get("Line"),
+            }
+            for car_number, update in data.items()
+            if "Line" in update
+        ]
+
+
+class DriverList(F1DataContainer):
+    """Driver list — static info keyframe + position stream.
+
+    The keyframe contains full driver metadata (name, team, headshot).
+    The stream tracks Line (display position) changes over time.
+    """
+
+    KEYFRAME_FILE: ClassVar[str | None] = "DriverList.json"
+    STREAM_FILE: ClassVar[str | None] = "DriverList.jsonStream"
+
+    keyframe: DriverListKeyframe | None = None
+    stream: DriverListStream | None = None

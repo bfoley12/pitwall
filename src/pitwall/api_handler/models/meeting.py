@@ -19,6 +19,9 @@ SESSION_KEYS = {
 }
 
 
+# TODO: Rework how meetings are loaded from F1's API
+# - Currently, we need to get the Season, then query the Season object for keyframe.get_meeting(name)
+# - We should probably allow F1Client.get(model=Meeting, year=year, meeting=meeting) and meeting knows the load the year?
 class Meeting(F1Model):
     code: str
     number: int

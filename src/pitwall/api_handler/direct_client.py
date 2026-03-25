@@ -9,8 +9,6 @@ from pydantic import JsonValue
 import pitwall.api_handler.registry as registry
 from pitwall.api_handler.models.base import (
     F1KeyframeContainer,
-    F1Model,
-    F1ModelT,
 )
 from pitwall.api_handler.models.session import (
     SessionSubType,
@@ -65,27 +63,6 @@ class DirectClient:
                 file=resolved.STREAM_FILE,
             )
         return resolved.model_validate(raw)
-
-    def get_file(
-        self, year: int, meeting: str, session: SessionSubType, file: str
-    ) -> F1Model:
-        return self.fetch(
-            model=F1Model, year=year, meeting=meeting, session=session, file=file
-        )
-
-    def fetch(
-        self,
-        model: type[F1ModelT],
-        year: int | None = None,
-        meeting: str | None = None,
-        session: SessionSubType | None = None,
-        file: str = "Index.json",
-    ) -> F1ModelT:
-        url = PathResolver(year=year, meeting=meeting, session=session, file=file).url
-        response = self.http.get(url)
-        _ = response.raise_for_status()
-        data = self._decode_response(response, file)
-        return model.model_validate(data)
 
     def _fetch_raw(
         self,

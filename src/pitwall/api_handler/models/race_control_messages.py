@@ -178,7 +178,9 @@ class RaceControlMessagesStream(F1Stream):
 
 
 @register
-class RaceControlMessages(F1DataContainer[RaceControlMessagesKeyframe, RaceControlMessagesStream]):
+class RaceControlMessages(
+    F1DataContainer[RaceControlMessagesKeyframe, RaceControlMessagesStream]
+):
     """Race control messages — flags, penalties, safety car, DRS.
 
     keyframe: Typed discriminated union of message objects.

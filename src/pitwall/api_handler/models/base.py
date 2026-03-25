@@ -146,6 +146,7 @@ class F1KeyframeContainer(F1Model, Generic[F1FrameT_co]):
     """Container with only a keyframe, no stream.
     Used directly to handle Index.json files (where no .jsonStream is supplied)
     """
+
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True,
         alias_generator=to_pascal,
@@ -158,7 +159,9 @@ class F1KeyframeContainer(F1Model, Generic[F1FrameT_co]):
     keyframe: F1FrameT_co
 
 
-class F1DataContainer(F1KeyframeContainer[F1FrameT_co], Generic[F1FrameT_co, F1StreamT_co]):
+class F1DataContainer(
+    F1KeyframeContainer[F1FrameT_co], Generic[F1FrameT_co, F1StreamT_co]
+):
     """Container with both a keyframe and a stream."""
 
     stream: F1StreamT_co

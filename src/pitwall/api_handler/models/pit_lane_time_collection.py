@@ -84,7 +84,9 @@ class PitLaneTimeCollectionKeyframe(F1Frame):
 
 
 @register
-class PitLaneTimeCollection(F1DataContainer[PitLaneTimeCollectionKeyframe, PitLaneTimeCollectionStream]):
+class PitLaneTimeCollection(
+    F1DataContainer[PitLaneTimeCollectionKeyframe, PitLaneTimeCollectionStream]
+):
     KEYFRAME_FILE: ClassVar[str | None] = "PitLaneTimeCollection.json"
     STREAM_FILE: ClassVar[str | None] = "PitLaneTimeCollection.jsonStream"
 

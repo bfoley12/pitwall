@@ -2,7 +2,8 @@ import asyncio
 import base64
 import json
 import zlib
-from typing import cast, overload
+from datetime import date
+from typing import Final, cast, overload
 
 import httpx
 from pydantic import JsonValue
@@ -41,7 +42,7 @@ _SESSION_ALIASES: dict[str, str] = {
 }
 
 
-def resolve_session_key(raw: str) -> str:
+def _resolve_session_key(raw: str) -> str:
     normalized = raw.strip().replace(" ", "_").lower()
     if normalized not in _SESSION_ALIASES:
         raise ValueError(f"Unknown session: {raw!r}")
@@ -50,7 +51,7 @@ def resolve_session_key(raw: str) -> str:
 
 def _validate_year(year: int) -> None:
     start = 2018
-    end = 2026
+    end = date.today().year
     if not start <= year <= end:
         raise ValueError(f"Year must be between {start} and {end}. Got {year}")
 
@@ -72,18 +73,34 @@ _retry_policy = retry(
 
 
 def _decompress(blob: str) -> dict[str, JsonValue]:
-    decoded = base64.b64decode(blob + "==")
+    # Only pad if padding is missing from end of blob
+    decoded = base64.b64decode(blob + "=" * (-len(blob) % 4))
     decompressed = zlib.decompress(decoded, -zlib.MAX_WBITS)
     return cast(dict[str, JsonValue], json.loads(decompressed))
 
 
 class _BaseClient:
-    _BASE_URL: str = "https://livetiming.formula1.com/static"
-    _TIMEOUT: httpx.Timeout = httpx.Timeout(connect=5.0, read=30.0)
-    _LIMITS: httpx.Limits = httpx.Limits(
-        max_connections=10, max_keepalive_connections=5
-    )
-    _FOLLOW_REDIRECTS: bool = True
+    _BASE_URL: Final[str] = "https://livetiming.formula1.com/static"
+
+    def __init__(
+        self,
+        *,
+        connect: float = 5.0,
+        read: float = 30.0,
+        max_connections: int = 10,
+        max_keepalive_connections: int = 5,
+        follow_redirects: bool = True,
+    ) -> None:
+        self._TIMEOUT: httpx.Timeout = httpx.Timeout(connect=connect, read=read)
+        self._LIMITS: httpx.Limits = httpx.Limits(
+            max_connections=max_connections,
+            max_keepalive_connections=max_keepalive_connections,
+        )
+        self._FOLLOW_REDIRECTS: bool = follow_redirects
+        self._season_cache: dict[int, Season] = {}
+
+    def clear_cache(self) -> None:
+        self._season_cache.clear()
 
     def _build_url(
         self,
@@ -106,7 +123,7 @@ class _BaseClient:
         if session is not None:
             if meeting is None:
                 raise ValueError("meeting is required when specifying session")
-            parts.append(resolve_session_key(session))
+            parts.append(_resolve_session_key(session))
 
         parts.append(file)
         return "/".join(parts)
@@ -140,6 +157,7 @@ class _BaseClient:
                     ) from err
                 timestamp = line[:quote_idx]
                 parsed = _decompress(line[quote_idx:].strip('"'))
+                # TODO: Find better way to address compressed files containing lists
                 key = "Entries" if "Entries" in parsed else "Position"
                 value = parsed.get(key)
                 if not isinstance(value, list):
@@ -161,14 +179,27 @@ class _BaseClient:
 
 
 class AsyncDirectClient(_BaseClient):
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        connect: float = 5.0,
+        read: float = 30.0,
+        max_connections: int = 10,
+        max_keepalive_connections: int = 5,
+        follow_redirects: bool = True,
+    ) -> None:
+        super().__init__(
+            connect=connect,
+            read=read,
+            max_connections=max_connections,
+            max_keepalive_connections=max_keepalive_connections,
+            follow_redirects=follow_redirects,
+        )
         self._client: httpx.AsyncClient = httpx.AsyncClient(
             timeout=self._TIMEOUT,
             limits=self._LIMITS,
             follow_redirects=self._FOLLOW_REDIRECTS,
         )
-        # TODO: Think about lru_cache
-        self._season_cache: dict[int, Season] = {}
 
     async def __aenter__(self) -> AsyncDirectClient:
         return self
@@ -227,8 +258,8 @@ class AsyncDirectClient(_BaseClient):
 
     async def get_season(self, year: int) -> Season:
         if year not in self._season_cache:
-            data = await self.fetch(year=year)
-            self._season_cache[year] = Season.model_validate(data[0])
+            data = await self.fetch_one(year=year)
+            self._season_cache[year] = Season.model_validate(data)
         return self._season_cache[year]
 
     async def get_meeting(self, year: int, meeting: str) -> Meeting:
@@ -247,16 +278,41 @@ class AsyncDirectClient(_BaseClient):
         response = (await self._client.get(url)).raise_for_status()
         return self._decode_response(response, file)
 
+    # Unused but left for convenience of users
+    async def fetch_one(
+        self,
+        year: int | None = None,
+        meeting: str | None = None,
+        session: str | None = None,
+        file: str = "Index.json",
+    ) -> dict[str, JsonValue]:
+        return (
+            await self.fetch(year=year, meeting=meeting, session=session, file=file)
+        )[0]
+
 
 class DirectClient(_BaseClient):
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        connect: float = 5.0,
+        read: float = 30.0,
+        max_connections: int = 10,
+        max_keepalive_connections: int = 5,
+        follow_redirects: bool = True,
+    ) -> None:
+        super().__init__(
+            connect=connect,
+            read=read,
+            max_connections=max_connections,
+            max_keepalive_connections=max_keepalive_connections,
+            follow_redirects=follow_redirects,
+        )
         self._client: httpx.Client = httpx.Client(
             timeout=self._TIMEOUT,
             limits=self._LIMITS,
             follow_redirects=self._FOLLOW_REDIRECTS,
         )
-        # TODO: Think about lru_cache
-        self._season_cache: dict[int, Season] = {}
 
     def __enter__(self) -> DirectClient:
         return self
@@ -310,8 +366,8 @@ class DirectClient(_BaseClient):
 
     def get_season(self, year: int) -> Season:
         if year not in self._season_cache:
-            data = self.fetch(year=year)
-            self._season_cache[year] = Season.model_validate(data[0])
+            data = self.fetch_one(year=year)
+            self._season_cache[year] = Season.model_validate(data)
         return self._season_cache[year]
 
     def get_meeting(self, year: int, meeting: str) -> Meeting:
@@ -329,3 +385,19 @@ class DirectClient(_BaseClient):
         url = self._build_url(year=year, meeting=meeting, session=session, file=file)
         response = self._client.get(url).raise_for_status()
         return self._decode_response(response, file)
+
+    # Unused but left for convenience of users
+    def fetch_one(
+        self,
+        year: int | None = None,
+        meeting: str | None = None,
+        session: str | None = None,
+        file: str = "Index.json",
+    ) -> dict[str, JsonValue]:
+        return self.fetch(year=year, meeting=meeting, session=session, file=file)[0]
+
+
+__all__ = [
+    "AsyncDirectClient",
+    "DirectClient",
+]

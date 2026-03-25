@@ -114,9 +114,7 @@ class TimingStatsStream(F1Stream):
                         "stat_type": "speed",
                         "position": trap_data.get("Position"),
                         "trap": trap,
-                        "speed": int(value)
-                        if isinstance(value, (str, int))
-                        else None,
+                        "speed": int(value) if isinstance(value, (str, int)) else None,
                         "sector": None,
                         "time_seconds": None,
                         "lap_time": None,

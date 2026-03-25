@@ -2,6 +2,6 @@ from . import (
     models,  # pyright: ignore[reportUnusedImport] - used to trigger registration
     registry,
 )
-from .direct_client import DirectClient
+from .client import AsyncDirectClient, DirectClient
 
-__all__ = ["DirectClient", "registry"]
+__all__ = ["AsyncDirectClient", "DirectClient", "registry"]

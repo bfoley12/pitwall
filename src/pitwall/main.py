@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import typer
 
-from pitwall.api_handler.direct_client import DirectClient
+from pitwall.api_handler.client import DirectClient
 from pitwall.api_handler.models.archive_status import ArchiveStatus
 from pitwall.api_handler.models.car_data import CarData
 from pitwall.api_handler.models.championship_prediction import ChampionshipPrediction

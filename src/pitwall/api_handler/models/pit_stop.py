@@ -4,6 +4,7 @@ import polars as pl
 from pydantic import JsonValue
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream
+from pitwall.api_handler.registry import register
 
 
 # TODO: handle errors better when files aren't found (ie PitStop.json in 2023 Abu Dhabi Race)
@@ -40,7 +41,8 @@ class PitStopStream(F1Stream):
         return pl.DataFrame(rows, schema=cls.SCHEMA)
 
 
-class PitStop(F1DataContainer):
+@register
+class PitStop(F1DataContainer[PitStopKeyframe, PitStopStream]):
     KEYFRAME_FILE: ClassVar[str | None] = "PitStop.json"
     STREAM_FILE: ClassVar[str | None] = "PitStop.jsonStream"
 

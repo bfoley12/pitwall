@@ -1,17 +1,11 @@
 from typing import ClassVar, override
 
 import polars as pl
-from pydantic import JsonValue, model_validator
+from pydantic import JsonValue
 
-from .base import F1DataContainer, F1Model, F1Stream
+from pitwall.api_handler.registry import register
 
-
-# TODO: TEMP for compatibility while I update
-def parse_timestamp(ts: str) -> int:
-    h, m, rest = ts.split(":")
-    s, ms = rest.split(".")
-    return int(h) * 3_600_000 + int(m) * 60_000 + int(s) * 1_000 + int(ms)
-
+from .base import F1DataContainer, F1Frame, F1Model, F1Stream
 
 # ── Keyframe ──────────────────────────────────────────
 
@@ -32,20 +26,28 @@ class TeamPrediction(F1Model):
     predicted_points: float
 
 
-class ChampionshipPredictionFrame(F1Model):
+class ChampionshipPredictionKeyframe(F1Frame):
     """Pre-race standings and predicted end-of-race standings."""
 
     drivers: dict[str, DriverPrediction]
     teams: dict[str, TeamPrediction]
 
 
-# ── Streams ───────────────────────────────────────────
+# ── Stream ────────────────────────────────────────────
 
 
-class DriverPredictionStream(F1Stream):
+class ChampionshipPredictionStream(F1Stream):
+    """Unified driver + team prediction stream.
+
+    Each row is either a driver or team update, distinguished by
+    the ``entry_type`` column.  ``entry_key`` holds the car number
+    for drivers or the team name for teams.
+    """
+
     SCHEMA: ClassVar[dict[str, pl.DataType]] = {
         "timestamp": pl.Duration("ms"),
-        "car_number": pl.Utf8(),
+        "entry_type": pl.Categorical(),
+        "entry_key": pl.Utf8(),
         "predicted_position": pl.UInt8(),
         "predicted_points": pl.Float64(),
     }
@@ -56,45 +58,28 @@ class DriverPredictionStream(F1Stream):
         cls, timestamp_ms: int, data: dict[str, JsonValue]
     ) -> list[dict[str, JsonValue]]:
         rows: list[dict[str, JsonValue]] = []
-        drivers = cls._as_dict(data.get("Drivers"))
 
-        for car_number, update in drivers.items():
+        for key, update in cls._as_dict(data.get("Drivers")).items():
             if not isinstance(update, dict):
                 continue
             rows.append(
                 {
                     "timestamp": timestamp_ms,
-                    "car_number": car_number,
+                    "entry_type": "driver",
+                    "entry_key": key,
                     "predicted_position": update.get("PredictedPosition"),
                     "predicted_points": update.get("PredictedPoints"),
                 }
             )
-        return rows
 
-
-class TeamPredictionStream(F1Stream):
-    SCHEMA: ClassVar[dict[str, pl.DataType]] = {
-        "timestamp": pl.Duration("ms"),
-        "team_key": pl.Utf8(),
-        "predicted_position": pl.UInt8(),
-        "predicted_points": pl.Float64(),
-    }
-
-    @override
-    @classmethod
-    def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
-        rows: list[dict[str, JsonValue]] = []
-        teams = cls._as_dict(data.get("Teams"))
-
-        for team_key, update in teams.items():
+        for key, update in cls._as_dict(data.get("Teams")).items():
             if not isinstance(update, dict):
                 continue
             rows.append(
                 {
                     "timestamp": timestamp_ms,
-                    "team_key": team_key,
+                    "entry_type": "team",
+                    "entry_key": key,
                     "predicted_position": update.get("PredictedPosition"),
                     "predicted_points": update.get("PredictedPoints"),
                 }
@@ -106,33 +91,12 @@ class TeamPredictionStream(F1Stream):
 # ── Container ─────────────────────────────────────────
 
 
-class ChampionshipPrediction(F1DataContainer):
-    """Championship predictions — keyframe + driver/team streams.
-
-    Both streams share the same source file. The container splits
-    the entries into separate DataFrames.
-    """
-
+@register
+class ChampionshipPrediction(
+    F1DataContainer[ChampionshipPredictionKeyframe, ChampionshipPredictionStream]
+):
     KEYFRAME_FILE: ClassVar[str | None] = "ChampionshipPrediction.json"
     STREAM_FILE: ClassVar[str | None] = "ChampionshipPrediction.jsonStream"
 
-    keyframe: ChampionshipPredictionFrame | None = None
-    drivers: DriverPredictionStream | None = None
-    teams: TeamPredictionStream | None = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def _split_stream(
-        cls, raw: dict[str, JsonValue] | list[JsonValue]
-    ) -> dict[str, JsonValue] | list[JsonValue]:
-        if not isinstance(raw, dict):
-            return raw
-        result: dict[str, JsonValue] = {}
-        keyframe = raw.get("keyframe")
-        if keyframe is not None:
-            result["keyframe"] = keyframe
-        entries = raw.get("stream")
-        if entries is not None:
-            result["drivers"] = entries
-            result["teams"] = entries
-        return result
+    keyframe: ChampionshipPredictionKeyframe
+    stream: ChampionshipPredictionStream

@@ -1,3 +1,7 @@
-from .f1_client import F1Client
+from . import (
+    models,  # pyright: ignore[reportUnusedImport] - used to trigger registration
+    registry,
+)
+from .direct_client import DirectClient
 
-__all__ = ["F1Client"]
+__all__ = ["DirectClient", "registry"]

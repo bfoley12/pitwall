@@ -6,6 +6,7 @@ import polars as pl
 from pydantic import Field, JsonValue
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream
+from pitwall.api_handler.registry import register
 
 
 class TyreCompound(StrEnum):
@@ -74,7 +75,8 @@ class CurrentTyresStream(F1Stream):
         return rows
 
 
-class CurrentTyres(F1DataContainer):
+@register
+class CurrentTyres(F1DataContainer[CurrentTyresKeyframe, CurrentTyresStream]):
     KEYFRAME_FILE: ClassVar[str | None] = "CurrentTyres.json"
     STREAM_FILE: ClassVar[str | None] = "CurrentTyres.jsonStream"
 

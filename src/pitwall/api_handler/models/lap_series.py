@@ -4,6 +4,7 @@ import polars as pl
 from pydantic import JsonValue, model_validator
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream
+from pitwall.api_handler.registry import register
 
 
 class DriverPositions(F1Model):
@@ -52,7 +53,8 @@ class LapSeriesStream(F1Stream):
         return rows
 
 
-class LapSeries(F1DataContainer):
+@register
+class LapSeries(F1DataContainer[LapSeriesKeyframe, LapSeriesStream]):
     KEYFRAME_FILE: ClassVar[str | None] = "LapSeries.json"
     STREAM_FILE: ClassVar[str | None] = "LapSeries.jsonStream"
 

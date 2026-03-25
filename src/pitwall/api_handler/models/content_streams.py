@@ -3,7 +3,9 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import JsonValue, model_validator
 
-from .base import F1DataContainer, F1Model, F1Stream
+from pitwall.api_handler.registry import register
+
+from .base import F1DataContainer, F1Frame, F1Model, F1Stream
 
 
 class ContentStream(F1Model):
@@ -15,7 +17,7 @@ class ContentStream(F1Model):
     utc: str | None = None
 
 
-class ContentStreamsKeyframe(F1Model):
+class ContentStreamsKeyframe(F1Frame):
     streams: list[ContentStream]
 
     @model_validator(mode="before")
@@ -66,11 +68,12 @@ class ContentStreamsStream(F1Stream):
         ]
 
 
-class ContentStreams(F1DataContainer):
+@register
+class ContentStreams(F1DataContainer[ContentStreamsKeyframe, ContentStreamsStream]):
     """Audio/video content stream references."""
 
     KEYFRAME_FILE: ClassVar[str | None] = "ContentStreams.json"
     STREAM_FILE: ClassVar[str | None] = "ContentStreams.jsonStream"
 
-    keyframe: ContentStreamsKeyframe | None = None
-    stream: ContentStreamsStream | None = None
+    keyframe: ContentStreamsKeyframe
+    stream: ContentStreamsStream

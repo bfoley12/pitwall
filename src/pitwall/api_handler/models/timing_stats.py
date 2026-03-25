@@ -5,11 +5,11 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import Field, JsonValue, field_validator, model_validator
 
+from pitwall.api_handler.registry import register
+
 from .base import F1DataContainer, F1Frame, F1Model, F1Stream
 from .session import SessionType
 from .timing_data import parse_lap_time
-
-# TODO: Unify with timing_data and timing_app? I modeled it by file, but there is significant overlap
 
 
 # TODO: In the case of a DNS (ie lando (RacingNumber 1) at 2026 Shanghai Race), a lot of these models collapse to {"value": ""}
@@ -70,93 +70,25 @@ class TimingStatsKeyframe(F1Frame):
         return data
 
 
-class TimingStatsBestSpeedStream(F1Stream):
+class TimingStatsStream(F1Stream):
+    """Unified stream for timing stats — best speeds, best sectors, personal bests.
+
+    ``stat_type`` discriminates rows: "speed", "sector", or "personal_best".
+    Columns specific to each type are null for other types.
+    """
+
     SCHEMA: ClassVar[dict[str, pl.DataType]] = {
         "timestamp": pl.Duration("ms"),
         "car_number": pl.Utf8(),
+        "stat_type": pl.Categorical(),
+        "position": pl.UInt8(),
+        # speed-specific
         "trap": pl.Utf8(),
-        "position": pl.UInt8(),
         "speed": pl.UInt16(),
-    }
-
-    @override
-    @classmethod
-    def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
-        rows: list[dict[str, JsonValue]] = []
-        for car_number, car_data in cls._iter_lines(data):
-            best_speeds = cls._as_dict(car_data.get("BestSpeeds"))
-
-            for trap, trap_data in best_speeds.items():
-                if not isinstance(trap_data, dict):
-                    continue
-                value = trap_data.get("Value")
-                rows.append(
-                    {
-                        "timestamp": timestamp_ms,
-                        "car_number": car_number,
-                        "trap": trap,
-                        "position": trap_data.get("Position"),
-                        "speed": int(value) if isinstance(value, (str, int)) else None,
-                    }
-                )
-
-        return rows
-
-
-class TimingStatsBestSectorStream(F1Stream):
-    SCHEMA: ClassVar[dict[str, pl.DataType]] = {
-        "timestamp": pl.Duration("ms"),
-        "car_number": pl.Utf8(),
+        # sector-specific
         "sector": pl.UInt8(),
-        "position": pl.UInt8(),
         "time_seconds": pl.Float64(),
-    }
-
-    @override
-    @classmethod
-    def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
-        rows: list[dict[str, JsonValue]] = []
-
-        for car_number, car_data in cls._iter_lines(data):
-            raw_sectors = car_data.get("BestSectors")
-
-            if isinstance(raw_sectors, list):
-                sector_items: Iterable[tuple[str, JsonValue]] = (
-                    (str(i), s) for i, s in enumerate(raw_sectors)
-                )
-            elif isinstance(raw_sectors, dict):
-                sector_items = raw_sectors.items()
-            else:
-                continue
-
-            for sector_idx, sector_data in sector_items:
-                if not isinstance(sector_data, dict):
-                    continue
-                value = sector_data.get("Value")
-                rows.append(
-                    {
-                        "timestamp": timestamp_ms,
-                        "car_number": car_number,
-                        "sector": int(sector_idx),
-                        "position": sector_data.get("Position"),
-                        "time_seconds": float(value)
-                        if isinstance(value, (str, int, float))
-                        else None,
-                    }
-                )
-
-        return rows
-
-
-class TimingStatsPersonalBestStream(F1Stream):
-    SCHEMA: ClassVar[dict[str, pl.DataType]] = {
-        "timestamp": pl.Duration("ms"),
-        "car_number": pl.Utf8(),
-        "position": pl.UInt8(),
+        # personal-best-specific
         "lap_time": pl.Duration("ms"),
         "lap": pl.UInt16(),
     }
@@ -169,26 +101,87 @@ class TimingStatsPersonalBestStream(F1Stream):
         rows: list[dict[str, JsonValue]] = []
 
         for car_number, car_data in cls._iter_lines(data):
+            # ── Best speeds ───────────────────────────
+            best_speeds = cls._as_dict(car_data.get("BestSpeeds"))
+            for trap, trap_data in best_speeds.items():
+                if not isinstance(trap_data, dict):
+                    continue
+                value = trap_data.get("Value")
+                rows.append(
+                    {
+                        "timestamp": timestamp_ms,
+                        "car_number": car_number,
+                        "stat_type": "speed",
+                        "position": trap_data.get("Position"),
+                        "trap": trap,
+                        "speed": int(value)
+                        if isinstance(value, (str, int))
+                        else None,
+                        "sector": None,
+                        "time_seconds": None,
+                        "lap_time": None,
+                        "lap": None,
+                    }
+                )
+
+            # ── Best sectors ──────────────────────────
+            raw_sectors = car_data.get("BestSectors")
+            if isinstance(raw_sectors, list):
+                sector_items: Iterable[tuple[str, JsonValue]] = (
+                    (str(i), s) for i, s in enumerate(raw_sectors)
+                )
+            elif isinstance(raw_sectors, dict):
+                sector_items = raw_sectors.items()
+            else:
+                sector_items = ()
+
+            for sector_idx, sector_data in sector_items:
+                if not isinstance(sector_data, dict):
+                    continue
+                value = sector_data.get("Value")
+                rows.append(
+                    {
+                        "timestamp": timestamp_ms,
+                        "car_number": car_number,
+                        "stat_type": "sector",
+                        "position": sector_data.get("Position"),
+                        "trap": None,
+                        "speed": None,
+                        "sector": int(sector_idx),
+                        "time_seconds": float(value)
+                        if isinstance(value, (str, int, float))
+                        else None,
+                        "lap_time": None,
+                        "lap": None,
+                    }
+                )
+
+            # ── Personal best ─────────────────────────
             pbl = car_data.get("PersonalBestLapTime")
-            if not isinstance(pbl, dict):
-                continue
-            value = pbl.get("Value")
-            rows.append(
-                {
-                    "timestamp": timestamp_ms,
-                    "car_number": car_number,
-                    "position": pbl.get("Position"),
-                    "lap_time": cls._parse_lap_time(value)
-                    if isinstance(value, str)
-                    else None,
-                    "lap": pbl.get("Lap"),
-                }
-            )
+            if isinstance(pbl, dict):
+                value = pbl.get("Value")
+                rows.append(
+                    {
+                        "timestamp": timestamp_ms,
+                        "car_number": car_number,
+                        "stat_type": "personal_best",
+                        "position": pbl.get("Position"),
+                        "trap": None,
+                        "speed": None,
+                        "sector": None,
+                        "time_seconds": None,
+                        "lap_time": cls._parse_lap_time(value)
+                        if isinstance(value, str)
+                        else None,
+                        "lap": pbl.get("Lap"),
+                    }
+                )
 
         return rows
 
 
-class TimingStats(F1DataContainer):
+@register
+class TimingStats(F1DataContainer[TimingStatsKeyframe, TimingStatsStream]):
     """Session timing statistics — speeds, sectors, personal bests.
 
     Three streams from the same file, split by stat type.
@@ -197,10 +190,8 @@ class TimingStats(F1DataContainer):
     KEYFRAME_FILE: ClassVar[str | None] = "TimingStats.json"
     STREAM_FILE: ClassVar[str | None] = "TimingStats.jsonStream"
 
-    keyframe: TimingStatsKeyframe | None = None
-    best_speeds: TimingStatsBestSpeedStream | None = None
-    best_sectors: TimingStatsBestSectorStream | None = None
-    personal_bests: TimingStatsPersonalBestStream | None = None
+    keyframe: TimingStatsKeyframe
+    stream: TimingStatsStream
 
     @model_validator(mode="before")
     @classmethod

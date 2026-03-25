@@ -4,7 +4,9 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import Field, JsonValue, model_validator
 
-from .base import F1DataContainer, F1Model, F1Stream
+from pitwall.api_handler.registry import register
+
+from .base import F1DataContainer, F1Frame, F1Model, F1Stream
 
 
 class DriverInfo(F1Model):
@@ -29,7 +31,7 @@ class DriverInfo(F1Model):
         return self.team_colour
 
 
-class DriverListKeyframe(F1Model):
+class DriverListKeyframe(F1Frame):
     """All drivers keyed by car number."""
 
     drivers: dict[str, DriverInfo]
@@ -73,7 +75,8 @@ class DriverListStream(F1Stream):
         ]
 
 
-class DriverList(F1DataContainer):
+@register
+class DriverList(F1DataContainer[DriverListKeyframe, DriverListStream]):
     """Driver list — static info keyframe + position stream.
 
     The keyframe contains full driver metadata (name, team, headshot).
@@ -83,5 +86,5 @@ class DriverList(F1DataContainer):
     KEYFRAME_FILE: ClassVar[str | None] = "DriverList.json"
     STREAM_FILE: ClassVar[str | None] = "DriverList.jsonStream"
 
-    keyframe: DriverListKeyframe | None = None
-    stream: DriverListStream | None = None
+    keyframe: DriverListKeyframe
+    stream: DriverListStream

@@ -4,6 +4,7 @@ import polars as pl
 from pydantic import JsonValue
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream
+from pitwall.api_handler.registry import register
 
 
 class PitLaneTimeCollectionStream(F1Stream):
@@ -82,7 +83,8 @@ class PitLaneTimeCollectionKeyframe(F1Frame):
     pit_times: dict[str, JsonValue]
 
 
-class PitLaneTimeCollection(F1DataContainer):
+@register
+class PitLaneTimeCollection(F1DataContainer[PitLaneTimeCollectionKeyframe, PitLaneTimeCollectionStream]):
     KEYFRAME_FILE: ClassVar[str | None] = "PitLaneTimeCollection.json"
     STREAM_FILE: ClassVar[str | None] = "PitLaneTimeCollection.jsonStream"
 

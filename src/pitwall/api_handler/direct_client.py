@@ -1,54 +1,70 @@
 import base64
 import json
 import zlib
-from typing import cast
+from typing import cast, overload
 
 import httpx
 from pydantic import JsonValue
 
-from pitwall.api_handler.models.base import F1DataContainerT, F1Model, F1ModelT
+import pitwall.api_handler.registry as registry
+from pitwall.api_handler.models.base import (
+    F1KeyframeContainer,
+    F1Model,
+    F1ModelT,
+)
 from pitwall.api_handler.models.session import (
     SessionSubType,
 )
 from pitwall.api_handler.path_resolver import PathResolver
 
-_RACE_SESSIONS: frozenset[SessionSubType] = frozenset(
-    {
-        SessionSubType.RACE,
-        SessionSubType.SPRINT,
-    }
-)
 
-
-class F1Client:
+class DirectClient:
     def __init__(self) -> None:
         self.http: httpx.Client = httpx.Client()
 
-    def get(
+    @overload
+    def get[T: F1KeyframeContainer](
         self,
-        model: type[F1DataContainerT],
+        model: type[T],
         year: int,
         meeting: str | None = None,
         session: SessionSubType | None = None,
-    ) -> F1DataContainerT:
-        raw: dict[str, object] = {}
+    ) -> T: ...
 
-        if model.KEYFRAME_FILE is not None:
+    @overload
+    def get(
+        self,
+        model: str,
+        year: int,
+        meeting: str | None = None,
+        session: SessionSubType | None = None,
+    ) -> F1KeyframeContainer: ...
+
+    def get(
+        self,
+        model: str | type[F1KeyframeContainer],
+        year: int,
+        meeting: str | None = None,
+        session: SessionSubType | None = None,
+    ) -> F1KeyframeContainer:
+        resolved = registry.get(model) if isinstance(model, str) else model
+
+        raw: dict[str, object] = {}
+        if resolved.KEYFRAME_FILE is not None:
             raw["keyframe"] = self._try_fetch_raw(
                 year=year,
                 meeting=meeting,
                 session=session,
-                file=model.KEYFRAME_FILE,
+                file=resolved.KEYFRAME_FILE,
             )
-
-        if model.STREAM_FILE is not None:
+        if resolved.STREAM_FILE is not None:
             raw["stream"] = self._try_fetch_raw(
                 year=year,
                 meeting=meeting,
                 session=session,
-                file=model.STREAM_FILE,
+                file=resolved.STREAM_FILE,
             )
-        return model.model_validate(raw)
+        return resolved.model_validate(raw)
 
     def get_file(
         self, year: int, meeting: str, session: SessionSubType, file: str

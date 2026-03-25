@@ -8,8 +8,8 @@ from pydantic import BeforeValidator, Field, JsonValue
 from pydantic.functional_validators import field_validator
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream
+from pitwall.api_handler.registry import register
 
-# TODO: Unify with timing_stats and timing_app? I modeled it by file, but there is significant overlap
 # TODO: Decode what segment status is: observed values: 0, 2048, 2049, 2050, 2051, 2052, 2064
 
 
@@ -198,9 +198,10 @@ class TimingDataF1Stream(F1Stream):
         return rows
 
 
-class TimingDataF1(F1DataContainer):
+@register
+class TimingDataF1(F1DataContainer[TimingDataF1Keyframe, TimingDataF1Stream]):
     KEYFRAME_FILE: ClassVar[str | None] = "TimingDataF1.json"
     STREAM_FILE: ClassVar[str | None] = "TimingDataF1.jsonStream"
 
-    keyframe: TimingDataF1Keyframe | None = None
-    stream: TimingDataF1Stream | None = None
+    keyframe: TimingDataF1Keyframe
+    stream: TimingDataF1Stream

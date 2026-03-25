@@ -3,6 +3,7 @@ from typing import ClassVar
 import polars as pl
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream
+from pitwall.api_handler.registry import register
 
 
 # TODO: Add units
@@ -29,7 +30,8 @@ class WeatherDataStream(F1Stream):
     }
 
 
-class WeatherData(F1DataContainer):
+@register
+class WeatherData(F1DataContainer[WeatherDataKeyframe, WeatherDataStream]):
     KEYFRAME_FILE: ClassVar[str | None] = "WeatherData.json"
     STREAM_FILE: ClassVar[str | None] = "WeatherData.jsonStream"
 

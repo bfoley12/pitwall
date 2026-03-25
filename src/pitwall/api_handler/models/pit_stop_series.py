@@ -6,6 +6,7 @@ from pydantic import Field, JsonValue
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream
 from pitwall.api_handler.models.pit_stop import PitStopKeyframe
+from pitwall.api_handler.registry import register
 
 
 class PitStopInfo(F1Model):
@@ -64,7 +65,8 @@ class PitStopSeriesStream(F1Stream):
         return rows
 
 
-class PitStopSeries(F1DataContainer):
+@register
+class PitStopSeries(F1DataContainer[PitStopSeriesKeyframe, PitStopSeriesStream]):
     KEYFRAME_FILE: ClassVar[str | None] = "PitStopSeries.json"
     STREAM_FILE: ClassVar[str | None] = "PitStopSeries.jsonStream"
 

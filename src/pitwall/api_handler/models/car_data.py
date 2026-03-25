@@ -3,7 +3,8 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import JsonValue
 
-from pitwall.api_handler.models.base import F1DataContainer, F1Stream
+from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream
+from pitwall.api_handler.registry import register
 
 # TODO: Decode Keyframe too (not actually informative, but just for completeness)
 # TODO: If F1 releases 2026 data (active aero and battery) reassess this labeling
@@ -16,6 +17,10 @@ CHANNEL_MAP: dict[str, str] = {
     "5": "brake",
     "45": "drs",
 }
+
+
+class CarDataFrame(F1Frame):
+    pass
 
 
 class CarDataStream(F1Stream):
@@ -64,7 +69,8 @@ class CarDataStream(F1Stream):
         return rows
 
 
-class CarData(F1DataContainer):
+@register
+class CarData(F1DataContainer[CarDataFrame, CarDataStream]):
     STREAM_FILE: ClassVar[str | None] = "CarData.z.jsonStream"
 
     stream: CarDataStream

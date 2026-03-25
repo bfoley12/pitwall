@@ -3,6 +3,8 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import JsonValue, model_validator
 
+from pitwall.api_handler.registry import register
+
 from .base import F1DataContainer, F1Frame, F1Stream
 
 
@@ -63,7 +65,8 @@ class LapCountKeyframe(F1Frame):
     total_laps: int
 
 
-class LapCount(F1DataContainer):
+@register
+class LapCount(F1DataContainer[LapCountKeyframe, LapCountStream]):
     """Race lap counter.
 
     keyframe: Final state — current_lap and total_laps.
@@ -75,5 +78,5 @@ class LapCount(F1DataContainer):
     KEYFRAME_FILE: ClassVar[str | None] = "LapCount.json"
     STREAM_FILE: ClassVar[str | None] = "LapCount.jsonStream"
 
-    keyframe: LapCountKeyframe | None = None
-    stream: LapCountStream | None = None
+    keyframe: LapCountKeyframe
+    stream: LapCountStream

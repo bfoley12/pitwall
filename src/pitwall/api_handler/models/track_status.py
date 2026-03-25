@@ -3,6 +3,7 @@ from typing import ClassVar
 import polars as pl
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream
+from pitwall.api_handler.registry import register
 
 
 class TrackStatusStream(F1Stream):
@@ -19,7 +20,8 @@ class TrackStatusKeyframe(F1Frame):
     message: str
 
 
-class TrackStatus(F1DataContainer):
+@register
+class TrackStatus(F1DataContainer[TrackStatusKeyframe, TrackStatusStream]):
     KEYFRAME_FILE: ClassVar[str | None] = "TrackStatus.json"
     STREAM_FILE: ClassVar[str | None] = "TrackStatus.jsonStream"
 

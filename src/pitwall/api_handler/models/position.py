@@ -3,7 +3,13 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import JsonValue
 
-from pitwall.api_handler.models.base import F1DataContainer, F1Stream
+from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream
+from pitwall.api_handler.registry import register
+
+
+# TODO: Implement
+class PositionKeyframe(F1Frame):
+    pass
 
 
 class PositionStream(F1Stream):
@@ -46,7 +52,8 @@ class PositionStream(F1Stream):
         return rows
 
 
-class Position(F1DataContainer):
+@register
+class Position(F1DataContainer[PositionKeyframe, PositionStream]):
     STREAM_FILE: ClassVar[str | None] = "Position.z.jsonStream"
 
     stream: PositionStream

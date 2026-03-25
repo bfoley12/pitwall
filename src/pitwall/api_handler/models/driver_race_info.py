@@ -5,7 +5,9 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import JsonValue, model_validator
 
-from .base import F1DataContainer, F1Model, F1Stream
+from pitwall.api_handler.registry import register
+
+from .base import F1DataContainer, F1Frame, F1Model, F1Stream
 
 
 class Catching(IntEnum):
@@ -78,7 +80,7 @@ class DriverRaceInfoLine(F1Model):
     is_out: bool = False
 
 
-class DriverRaceInfoKeyframe(F1Model):
+class DriverRaceInfoKeyframe(F1Frame):
     """Final race standings from DriverRaceInfo.json."""
 
     drivers: dict[str, DriverRaceInfoLine]
@@ -232,7 +234,8 @@ class DriverRaceInfoStream(F1Stream):
 # ── Container ─────────────────────────────────────────
 
 
-class DriverRaceInfo(F1DataContainer):
+@register
+class DriverRaceInfo(F1DataContainer[DriverRaceInfoKeyframe, DriverRaceInfoStream]):
     """Driver race info — keyframe + event stream.
 
     Key column behaviors on stream.frame:
@@ -246,5 +249,5 @@ class DriverRaceInfo(F1DataContainer):
     KEYFRAME_FILE: ClassVar[str | None] = "DriverRaceInfo.json"
     STREAM_FILE: ClassVar[str | None] = "DriverRaceInfo.jsonStream"
 
-    keyframe: DriverRaceInfoKeyframe | None = None
-    stream: DriverRaceInfoStream | None = None
+    keyframe: DriverRaceInfoKeyframe
+    stream: DriverRaceInfoStream

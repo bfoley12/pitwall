@@ -5,7 +5,9 @@ from typing import Annotated, ClassVar, Literal, override
 import polars as pl
 from pydantic import Discriminator, Field, JsonValue, Tag, model_validator
 
-from .base import F1DataContainer, F1Model, F1Stream
+from pitwall.api_handler.registry import register
+
+from .base import F1DataContainer, F1Frame, F1Model, F1Stream
 
 
 class FlagType(StrEnum):
@@ -105,7 +107,7 @@ RaceControlMessage = Annotated[
 # ── Keyframe ──────────────────────────────────────────
 
 
-class RaceControlMessagesKeyframe(F1Model):
+class RaceControlMessagesKeyframe(F1Frame):
     messages: list[RaceControlMessage]
 
     @model_validator(mode="before")
@@ -175,7 +177,8 @@ class RaceControlMessagesStream(F1Stream):
 # ── Container ─────────────────────────────────────────
 
 
-class RaceControlMessages(F1DataContainer):
+@register
+class RaceControlMessages(F1DataContainer[RaceControlMessagesKeyframe, RaceControlMessagesStream]):
     """Race control messages — flags, penalties, safety car, DRS.
 
     keyframe: Typed discriminated union of message objects.
@@ -185,5 +188,5 @@ class RaceControlMessages(F1DataContainer):
     KEYFRAME_FILE: ClassVar[str | None] = "RaceControlMessages.json"
     STREAM_FILE: ClassVar[str | None] = "RaceControlMessages.jsonStream"
 
-    keyframe: RaceControlMessagesKeyframe | None = None
-    stream: RaceControlMessagesStream | None = None
+    keyframe: RaceControlMessagesKeyframe
+    stream: RaceControlMessagesStream

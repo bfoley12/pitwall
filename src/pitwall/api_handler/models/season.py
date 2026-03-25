@@ -2,7 +2,11 @@ from typing import ClassVar, override
 
 from pydantic import JsonValue, model_validator
 
-from pitwall.api_handler.models.base import F1DataContainer, F1Frame
+from pitwall.api_handler.models.base import (
+    F1Frame,
+    F1KeyframeContainer,
+)
+from pitwall.api_handler.registry import register
 
 from .meeting import Meeting
 
@@ -12,7 +16,7 @@ class SeasonKeyframe(F1Frame):
     meetings: list[Meeting]
 
     @model_validator(mode="after")
-    def sort_meetings(self) -> "SeasonKeyframe":
+    def sort_meetings(self) -> SeasonKeyframe:
         self.meetings.sort(key=lambda m: m.number)
         return self
 
@@ -58,7 +62,8 @@ class SeasonKeyframe(F1Frame):
         return res
 
 
-class Season(F1DataContainer):
+@register
+class Season(F1KeyframeContainer[SeasonKeyframe]):
     KEYFRAME_FILE: ClassVar[str | None] = "Index.json"
 
     keyframe: SeasonKeyframe

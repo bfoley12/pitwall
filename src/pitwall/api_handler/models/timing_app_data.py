@@ -6,6 +6,7 @@ from pydantic import JsonValue, model_validator
 
 from pitwall.api_handler.models.current_tyres import TyreCompound
 from pitwall.api_handler.models.timing_data import LapTime
+from pitwall.api_handler.registry import register
 
 from .base import F1DataContainer, F1Frame, F1Model, F1Stream
 
@@ -116,7 +117,8 @@ class TimingAppStream(F1Stream):
         return rows
 
 
-class TimingAppData(F1DataContainer):
+@register
+class TimingAppData(F1DataContainer[TimingAppKeyframe, TimingAppStream]):
     """Stint and tyre data from TimingAppData.
 
     keyframe: Final state from TimingAppData.json.
@@ -128,5 +130,5 @@ class TimingAppData(F1DataContainer):
     KEYFRAME_FILE: ClassVar[str | None] = "TimingAppData.json"
     STREAM_FILE: ClassVar[str | None] = "TimingAppData.jsonStream"
 
-    keyframe: TimingAppKeyframe | None = None
-    stream: TimingAppStream | None = None
+    keyframe: TimingAppKeyframe
+    stream: TimingAppStream

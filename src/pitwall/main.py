@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import typer
 
-from pitwall.api_handler.f1_client import F1Client
+from pitwall.api_handler.direct_client import DirectClient
 from pitwall.api_handler.models.archive_status import ArchiveStatus
 from pitwall.api_handler.models.car_data import CarData
 from pitwall.api_handler.models.championship_prediction import ChampionshipPrediction
@@ -38,7 +38,7 @@ class Defaults:
 
 
 DEFAULTS = Defaults()
-client = F1Client()
+client = DirectClient()
 
 
 @app.command()

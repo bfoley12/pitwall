@@ -10,7 +10,8 @@ from pydantic import (
     model_validator,
 )
 
-from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model
+from pitwall.api_handler.models.base import F1Frame, F1KeyframeContainer, F1Model
+from pitwall.api_handler.registry import register
 
 
 def _normalize_session_name(v: object) -> object:
@@ -47,16 +48,16 @@ class SessionSubType(StrEnum):
     SPRINT = "Sprint"
     RACE = "Race"
 
-    RACE_ONLY: ClassVar[frozenset["SessionSubType"]]
+    RACE_ONLY: ClassVar[frozenset[SessionSubType]]
 
     @override
     def __str__(self) -> str:
         return self.value
 
     @classmethod
-    def parse(cls, value: str) -> "SessionSubType":
+    def parse(cls, value: str) -> SessionSubType:
         cleaned = _SESSION_ALIASES.get(value.strip().casefold(), value.strip())
-        lookup = {m.value.casefold(): m for m in cls}
+        lookup: dict[str, SessionSubType] = {m.value.casefold(): m for m in cls}
         result = lookup.get(cleaned.casefold())
         if result is None:
             valid = ", ".join(m.value for m in cls)
@@ -66,7 +67,7 @@ class SessionSubType(StrEnum):
         return result
 
 
-RACE_ONLY_SESSIONS = frozenset(
+RACE_ONLY_SESSIONS = frozenset[SessionSubType](
     {
         SessionSubType.RACE,
         SessionSubType.SPRINT,
@@ -288,7 +289,8 @@ class SessionIndexKeyframe(F1Frame):
         return f"SessionFeeds({set_feeds})"
 
 
-class SessionIndex(F1DataContainer):
+@register
+class SessionIndex(F1KeyframeContainer[SessionIndexKeyframe]):
     KEYFRAME_FILE: ClassVar[str | None] = "Index.json"
 
     keyframe: SessionIndexKeyframe

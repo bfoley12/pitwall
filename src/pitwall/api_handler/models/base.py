@@ -1,7 +1,7 @@
 import re
 from collections.abc import Iterable
 from datetime import datetime
-from typing import Any, ClassVar, TypeVar
+from typing import Any, ClassVar, Generic, TypeVar
 
 import polars as pl
 from pydantic import (
@@ -137,10 +137,15 @@ class F1Stream(F1Model):
         return raw
 
 
-# TODO: Use Session/Index.py to dynamically set file names
-class F1DataContainer(F1Model):
-    """Top-level container fetched by the client."""
+# TODO: Update to PEP 695 when basedpyright supports it
+F1FrameT_co = TypeVar("F1FrameT_co", bound=F1Frame, covariant=True, default=F1Frame)
+F1StreamT_co = TypeVar("F1StreamT_co", bound=F1Stream, covariant=True, default=F1Stream)
 
+
+class F1KeyframeContainer(F1Model, Generic[F1FrameT_co]):
+    """Container with only a keyframe, no stream.
+    Used directly to handle Index.json files (where no .jsonStream is supplied)
+    """
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True,
         alias_generator=to_pascal,
@@ -150,6 +155,13 @@ class F1DataContainer(F1Model):
     KEYFRAME_FILE: ClassVar[str | None] = None
     STREAM_FILE: ClassVar[str | None] = None
 
+    keyframe: F1FrameT_co
+
+
+class F1DataContainer(F1KeyframeContainer[F1FrameT_co], Generic[F1FrameT_co, F1StreamT_co]):
+    """Container with both a keyframe and a stream."""
+
+    stream: F1StreamT_co
+
 
 F1ModelT = TypeVar("F1ModelT", bound=F1Model)
-F1DataContainerT = TypeVar("F1DataContainerT", bound=F1DataContainer)

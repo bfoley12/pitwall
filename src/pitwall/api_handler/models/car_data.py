@@ -1,6 +1,7 @@
-from typing import Any, ClassVar, override
+from typing import ClassVar, override
 
 import polars as pl
+from pydantic import JsonValue
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Stream
 
@@ -35,23 +36,30 @@ class CarDataStream(F1Stream):
     @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        rows = [
-            {
-                "timestamp": timestamp_ms,
-                "utc": cls._parse_utc(data["Utc"]),
-                "racing_number": racing_num,
-                "rpm": ch.get("0", 0),
-                "speed": ch.get("2", 0),
-                "gear": ch.get("3", 0),
-                "throttle": ch.get("4", 0),
-                "brake": ch.get("5", 0),
-                "drs": ch.get("45"),
-            }
-            for racing_num, car in data["Cars"].items()
-            for ch in [car["Channels"]]
-        ]
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        rows: list[dict[str, JsonValue]] = []
+        utc_raw = data.get("Utc")
+        utc = utc_raw if isinstance(utc_raw, str) else None
+        cars = cls._as_dict(data.get("Cars"))
+
+        for racing_num, car in cars.items():
+            if not isinstance(car, dict):
+                continue
+            ch = cls._as_dict(car.get("Channels"))
+            rows.append(
+                {
+                    "timestamp": timestamp_ms,
+                    "utc": utc,
+                    "racing_number": racing_num,
+                    "rpm": ch.get("0", 0),
+                    "speed": ch.get("2", 0),
+                    "gear": ch.get("3", 0),
+                    "throttle": ch.get("4", 0),
+                    "brake": ch.get("5", 0),
+                    "drs": ch.get("45"),
+                }
+            )
 
         return rows
 

@@ -1,6 +1,6 @@
-from typing import Any, ClassVar, override
+from typing import ClassVar, override
 
-from pydantic import model_validator
+from pydantic import JsonValue, model_validator
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Frame
 
@@ -65,9 +65,7 @@ class Season(F1DataContainer):
 
     @model_validator(mode="before")
     @classmethod
-    def _wrap(cls, raw: Any) -> dict[str, Any]:
-        response = {}
-        if isinstance(raw, dict) and "keyframe" not in raw:
-            response["keyframe"] = raw
-            return response
+    def _wrap(cls, raw: dict[str, JsonValue]) -> dict[str, JsonValue]:
+        if "keyframe" not in raw:
+            return {"keyframe": raw}
         return raw

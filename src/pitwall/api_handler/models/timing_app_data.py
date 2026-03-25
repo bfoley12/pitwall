@@ -1,8 +1,8 @@
 from collections.abc import ItemsView
-from typing import Any, ClassVar
+from typing import ClassVar, override
 
 import polars as pl
-from pydantic import model_validator
+from pydantic import JsonValue, model_validator
 
 from pitwall.api_handler.models.current_tyres import TyreCompound
 from pitwall.api_handler.models.timing_data import LapTime
@@ -34,10 +34,10 @@ class TimingAppKeyframe(F1Frame):
 
     @model_validator(mode="before")
     @classmethod
-    def _unwrap(cls, data: Any) -> Any:
-        if isinstance(data, dict) and "Lines" in data:
+    def _unwrap(cls, data: dict[str, JsonValue]) -> dict[str, JsonValue]:
+        if "Lines" in data:
             return {"drivers": data["Lines"]}
-        if isinstance(data, dict) and "drivers" not in data:
+        if "drivers" not in data:
             return {"drivers": data}
         return data
 
@@ -71,14 +71,15 @@ class TimingAppStream(F1Stream):
         "lap_flags": pl.UInt8(),
     }
 
+    @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        rows: list[dict[str, Any]] = []
-
-        for car_number, car_data in data.get("Lines", {}).items():
-            raw_stints = car_data.get("Stints", {})
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        rows: list[dict[str, JsonValue]] = []
+        data = cls._as_dict(data.get("Lines", {}))
+        for car_number, _ in data.items():
+            raw_stints = cls._as_dict(data.get("Stints", {}))
 
             # First entry uses a list, subsequent use index-keyed dicts
             if isinstance(raw_stints, list):
@@ -89,18 +90,21 @@ class TimingAppStream(F1Stream):
             for stint_idx, stint in stints.items():
                 if not isinstance(stint, dict):
                     continue
+
+                tyres_not_changed = stint.get("TyresNotChanged")
+
                 rows.append(
                     {
                         "timestamp": timestamp_ms,
                         "car_number": car_number,
                         "stint_number": int(stint_idx),
                         "compound": stint.get("Compound"),
-                        "new": (stint["New"] == "true" if "New" in stint else None),
-                        "tyres_not_changed": (
-                            int(stint["TyresNotChanged"])
-                            if "TyresNotChanged" in stint
-                            else None
-                        ),
+                        "new": stint["New"] == "true"
+                        if isinstance(stint.get("New"), str)
+                        else None,
+                        "tyres_not_changed": int(tyres_not_changed)
+                        if isinstance(tyres_not_changed, (str, int))
+                        else None,
                         "total_laps": stint.get("TotalLaps"),
                         "start_laps": stint.get("StartLaps"),
                         "lap_time": stint.get("LapTime"),

@@ -1,9 +1,9 @@
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, Any, ClassVar, Literal
+from typing import Annotated, ClassVar, Literal, override
 
 import polars as pl
-from pydantic import Discriminator, Field, Tag, model_validator
+from pydantic import Discriminator, Field, JsonValue, Tag, model_validator
 
 from .base import F1DataContainer, F1Model, F1Stream
 
@@ -110,8 +110,8 @@ class RaceControlMessagesKeyframe(F1Model):
 
     @model_validator(mode="before")
     @classmethod
-    def _wrap(cls, data: Any) -> Any:
-        if isinstance(data, dict) and "Messages" in data:
+    def _wrap(cls, data: dict[str, JsonValue]) -> dict[str, JsonValue]:
+        if "Messages" in data:
             return {"messages": data["Messages"]}
         return data
 
@@ -136,31 +136,40 @@ class RaceControlMessagesStream(F1Stream):
         "mode": pl.Utf8(),
     }
 
+    @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        raw_msgs = data.get("Messages", {})
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        raw_msgs = data.get("Messages")
+        if isinstance(raw_msgs, list):
+            messages = raw_msgs
+        elif isinstance(raw_msgs, dict):
+            messages = list(raw_msgs.values())
+        else:
+            return []
 
-        # First entry is a list, subsequent are dicts keyed by index
-        messages = raw_msgs if isinstance(raw_msgs, list) else list(raw_msgs.values())
+        rows: list[dict[str, JsonValue]] = []
+        for msg in messages:
+            if not isinstance(msg, dict):
+                continue
+            rows.append(
+                {
+                    "timestamp": timestamp_ms,
+                    "utc": msg.get("Utc"),
+                    "category": msg.get("Category"),
+                    "message": msg.get("Message"),
+                    "lap": msg.get("Lap"),
+                    "flag": msg.get("Flag"),
+                    "scope": msg.get("Scope"),
+                    "sector": msg.get("Sector"),
+                    "racing_number": msg.get("RacingNumber"),
+                    "status": msg.get("Status"),
+                    "mode": msg.get("Mode"),
+                }
+            )
 
-        return [
-            {
-                "timestamp": timestamp_ms,
-                "utc": msg.get("Utc"),
-                "category": msg.get("Category"),
-                "message": msg.get("Message"),
-                "lap": msg.get("Lap"),
-                "flag": msg.get("Flag"),
-                "scope": msg.get("Scope"),
-                "sector": msg.get("Sector"),
-                "racing_number": msg.get("RacingNumber"),
-                "status": msg.get("Status"),
-                "mode": msg.get("Mode"),
-            }
-            for msg in messages
-        ]
+        return rows
 
 
 # ── Container ─────────────────────────────────────────

@@ -1,6 +1,7 @@
-from typing import Any, ClassVar
+from typing import ClassVar, override
 
 import polars as pl
+from pydantic import JsonValue
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream
 from pitwall.api_handler.models.current_tyres import TyreCompound
@@ -26,29 +27,34 @@ class TyreStintSeriesStream(F1Stream):
         "start_laps": pl.UInt16(),
     }
 
+    @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        rows: list[dict[str, Any]] = []
-        stints = data.get("Stints", {})
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        rows: list[dict[str, JsonValue]] = []
+        stints = cls._as_dict(data.get("Stints"))
+
         for car_num, car_stints in stints.items():
-            if isinstance(car_stints, dict):
-                for stint_idx, fields in car_stints.items():
-                    rows.append(
-                        {
-                            "timestamp": timestamp_ms,
-                            "car_number": int(car_num),
-                            "stint_index": int(stint_idx),
-                            "compound": fields.get("Compound"),
-                            "new": fields.get("New") == "true"
-                            if fields.get("New") is not None
-                            else None,
-                            "tyres_not_changed": fields.get("TyresNotChanged"),
-                            "total_laps": fields.get("TotalLaps"),
-                            "start_laps": fields.get("StartLaps"),
-                        }
-                    )
+            if not isinstance(car_stints, dict):
+                continue
+            for stint_idx, fields in car_stints.items():
+                if not isinstance(fields, dict):
+                    continue
+                new_raw = fields.get("New")
+                rows.append(
+                    {
+                        "timestamp": timestamp_ms,
+                        "car_number": int(car_num),
+                        "stint_index": int(stint_idx),
+                        "compound": fields.get("Compound"),
+                        "new": new_raw == "true" if isinstance(new_raw, str) else None,
+                        "tyres_not_changed": fields.get("TyresNotChanged"),
+                        "total_laps": fields.get("TotalLaps"),
+                        "start_laps": fields.get("StartLaps"),
+                    }
+                )
+
         return rows
 
 

@@ -1,8 +1,9 @@
+from collections.abc import Iterable
 from datetime import timedelta
-from typing import Any, ClassVar
+from typing import ClassVar, override
 
 import polars as pl
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, JsonValue, field_validator, model_validator
 
 from .base import F1DataContainer, F1Frame, F1Model, F1Stream
 from .session import SessionType
@@ -62,10 +63,10 @@ class TimingStatsKeyframe(F1Frame):
 
     @model_validator(mode="before")
     @classmethod
-    def _lines_to_list(cls, data: dict[str, object]) -> dict[str, object]:
-        lines = data.get("Lines", {})
+    def _lines_to_list(cls, data: dict[str, JsonValue]) -> dict[str, JsonValue]:
+        lines = data.get("Lines")
         if isinstance(lines, dict):
-            data["Lines"] = list(lines.values())
+            data["Lines"] = [v for v in lines.values()]
         return data
 
 
@@ -78,13 +79,16 @@ class TimingStatsBestSpeedStream(F1Stream):
         "speed": pl.UInt16(),
     }
 
+    @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        rows: list[dict[str, Any]] = []
-        for car_number, car_data in data.get("Lines", {}).items():
-            for trap, trap_data in car_data.get("BestSpeeds", {}).items():
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        rows: list[dict[str, JsonValue]] = []
+        for car_number, car_data in cls._iter_lines(data):
+            best_speeds = cls._as_dict(car_data.get("BestSpeeds"))
+
+            for trap, trap_data in best_speeds.items():
                 if not isinstance(trap_data, dict):
                     continue
                 value = trap_data.get("Value")
@@ -94,9 +98,10 @@ class TimingStatsBestSpeedStream(F1Stream):
                         "car_number": car_number,
                         "trap": trap,
                         "position": trap_data.get("Position"),
-                        "speed": int(value) if value else None,
+                        "speed": int(value) if isinstance(value, (str, int)) else None,
                     }
                 )
+
         return rows
 
 
@@ -109,17 +114,24 @@ class TimingStatsBestSectorStream(F1Stream):
         "time_seconds": pl.Float64(),
     }
 
+    @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        rows: list[dict[str, Any]] = []
-        for car_number, car_data in data.get("Lines", {}).items():
-            raw_sectors = car_data.get("BestSectors", {})
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        rows: list[dict[str, JsonValue]] = []
+
+        for car_number, car_data in cls._iter_lines(data):
+            raw_sectors = car_data.get("BestSectors")
+
             if isinstance(raw_sectors, list):
-                sector_items = ((str(i), s) for i, s in enumerate(raw_sectors))
-            else:
+                sector_items: Iterable[tuple[str, JsonValue]] = (
+                    (str(i), s) for i, s in enumerate(raw_sectors)
+                )
+            elif isinstance(raw_sectors, dict):
                 sector_items = raw_sectors.items()
+            else:
+                continue
 
             for sector_idx, sector_data in sector_items:
                 if not isinstance(sector_data, dict):
@@ -131,9 +143,12 @@ class TimingStatsBestSectorStream(F1Stream):
                         "car_number": car_number,
                         "sector": int(sector_idx),
                         "position": sector_data.get("Position"),
-                        "time_seconds": float(value) if value else None,
+                        "time_seconds": float(value)
+                        if isinstance(value, (str, int, float))
+                        else None,
                     }
                 )
+
         return rows
 
 
@@ -146,23 +161,30 @@ class TimingStatsPersonalBestStream(F1Stream):
         "lap": pl.UInt16(),
     }
 
+    @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        rows: list[dict[str, Any]] = []
-        for car_number, car_data in data.get("Lines", {}).items():
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        rows: list[dict[str, JsonValue]] = []
+
+        for car_number, car_data in cls._iter_lines(data):
             pbl = car_data.get("PersonalBestLapTime")
-            if isinstance(pbl, dict):
-                rows.append(
-                    {
-                        "timestamp": timestamp_ms,
-                        "car_number": car_number,
-                        "position": pbl.get("Position"),
-                        "lap_time": cls._parse_lap_time(pbl.get("Value")),
-                        "lap": pbl.get("Lap"),
-                    }
-                )
+            if not isinstance(pbl, dict):
+                continue
+            value = pbl.get("Value")
+            rows.append(
+                {
+                    "timestamp": timestamp_ms,
+                    "car_number": car_number,
+                    "position": pbl.get("Position"),
+                    "lap_time": cls._parse_lap_time(value)
+                    if isinstance(value, str)
+                    else None,
+                    "lap": pbl.get("Lap"),
+                }
+            )
+
         return rows
 
 

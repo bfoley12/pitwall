@@ -281,8 +281,8 @@ class SessionIndexKeyframe(F1Frame):
 
     @override
     def __str__(self) -> str:
-        set_feeds = {k: v for k, v in self.__dict__.items() if isinstance(v, Feed)}
-        extra = self.__dict__.get("extra", {})
+        set_feeds = {k: v for k, v in self.__dict__.items() if isinstance(v, Feed)}  # pyright: ignore[reportAny] - constrained by __dict__ built-in
+        extra = self.__dict__.get("extra", {})  # pyright: ignore[reportAny] - constrained by __dict__ built-in
         if extra:
             set_feeds["extra"] = extra
         return f"SessionFeeds({set_feeds})"

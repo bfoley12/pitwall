@@ -1,9 +1,10 @@
 import base64
 import json
 import zlib
-from typing import Any
+from typing import cast
 
 import httpx
+from pydantic import JsonValue
 
 from pitwall.api_handler.models.base import F1DataContainerT, F1Model, F1ModelT
 from pitwall.api_handler.models.session import (
@@ -30,7 +31,7 @@ class F1Client:
         meeting: str | None = None,
         session: SessionSubType | None = None,
     ) -> F1DataContainerT:
-        raw: dict[str, Any] = {}
+        raw: dict[str, object] = {}
 
         if model.KEYFRAME_FILE is not None:
             raw["keyframe"] = self._try_fetch_raw(
@@ -96,24 +97,25 @@ class F1Client:
         except httpx.HTTPStatusError:
             return None
 
-    def _decompress(self, blob: str) -> Any:
+    def _decompress(self, blob: str) -> dict[str, JsonValue]:
         decoded = base64.b64decode(blob + "==")
         decompressed = zlib.decompress(decoded, -zlib.MAX_WBITS)
-        return json.loads(decompressed)
+        return cast(dict[str, JsonValue], json.loads(decompressed))
 
     def _decode_response(
         self, response: httpx.Response, file: str
-    ) -> list[dict[str, Any]]:
+    ) -> list[dict[str, JsonValue]]:
         text = response.text.lstrip("\ufeff")
 
         if file.endswith(".z.json"):
-            return [self._decompress(json.loads(text))]
+            blob = cast(str, json.loads(text))
+            return [self._decompress(blob)]
 
         if file.endswith(".json"):
-            return [json.loads(text)]
+            return [cast(dict[str, JsonValue], json.loads(text))]
 
         compressed = file.endswith(".z.jsonStream")
-        entries: list[dict[str, Any]] = []
+        entries: list[dict[str, JsonValue]] = []
 
         for line in text.strip().split("\n"):
             if not line:
@@ -124,12 +126,15 @@ class F1Client:
                 timestamp = line[:quote_idx]
                 parsed = self._decompress(line[quote_idx:].strip('"'))
                 key = "Entries" if "Entries" in parsed else "Position"
-                for payload in parsed[key]:
+                value = parsed.get(key)
+                if not isinstance(value, list):
+                    continue
+                for payload in value:
                     entries.append({"Timestamp": timestamp, "Data": payload})
             else:
                 brace_idx = line.index("{")
                 timestamp = line[:brace_idx]
-                payload = json.loads(line[brace_idx:])
+                payload = cast(JsonValue, json.loads(line[brace_idx:]))
                 entries.append({"Timestamp": timestamp, "Data": payload})
 
         return entries

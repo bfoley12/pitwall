@@ -1,9 +1,9 @@
 from collections.abc import Iterator
 from enum import StrEnum
-from typing import Any, ClassVar, override
+from typing import ClassVar, override
 
 import polars as pl
-from pydantic import Field
+from pydantic import Field, JsonValue
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream
 
@@ -17,6 +17,9 @@ class TyreCompound(StrEnum):
     WET = "WET"
     # TODO: Find way to disambiguate this. Seen in 2023 Abu Dhabi GP Race
     UNKNOWN = "UNKNOWN"
+
+
+_VALID_COMPOUNDS = {e.value for e in TyreCompound}
 
 
 class TyreInfo(F1Model):
@@ -45,18 +48,26 @@ class CurrentTyresStream(F1Stream):
     @classmethod
     @override
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        rows: list[dict[str, Any]] = []
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        rows: list[dict[str, JsonValue]] = []
+        tyres = cls._as_dict(data.get("Tyres"))
 
-        for racing_number, tyre_data in data.get("Tyres", {}).items():
+        for racing_number, tyre_data in tyres.items():
             if not isinstance(tyre_data, dict):
                 continue
+
+            compound_raw = tyre_data.get("Compound")
+            compound = (
+                compound_raw
+                if isinstance(compound_raw, str) and compound_raw in _VALID_COMPOUNDS
+                else "UNKNOWN"
+            )
             rows.append(
                 {
                     "timestamp": timestamp_ms,
                     "racing_number": racing_number,
-                    "compound": TyreCompound(tyre_data.get("Compound", "UNKNOWN")),
+                    "compound": compound,
                     "new": tyre_data.get("New", False),
                 }
             )

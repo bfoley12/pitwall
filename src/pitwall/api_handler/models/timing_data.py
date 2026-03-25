@@ -1,9 +1,10 @@
 import re
+from collections.abc import Iterable
 from datetime import timedelta
-from typing import Annotated, Any, ClassVar, override
+from typing import Annotated, ClassVar, override
 
 import polars as pl
-from pydantic import BeforeValidator, Field
+from pydantic import BeforeValidator, Field, JsonValue
 from pydantic.functional_validators import field_validator
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream
@@ -149,43 +150,48 @@ class TimingDataF1Stream(F1Stream):
     @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        rows: list[dict[str, Any]] = []
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        rows: list[dict[str, JsonValue]] = []
+        lines = cls._as_dict(data.get("Lines"))
 
-        for car_number, car_data in data.get("Lines", {}).items():
-            sectors = car_data.get("Sectors", {})
+        for car_number, car_data in lines.items():
+            if not isinstance(car_data, dict):
+                continue
 
-            # First entry may be a list, subsequent are index-keyed dicts
+            sectors = car_data.get("Sectors")
             if isinstance(sectors, list):
-                sector_items = enumerate(sectors)
-            else:
+                sector_items: Iterable[tuple[int, JsonValue]] = enumerate(sectors)
+            elif isinstance(sectors, dict):
                 sector_items = ((int(k), v) for k, v in sectors.items())
+            else:
+                continue
 
             for sector_idx, sector_data in sector_items:
                 if not isinstance(sector_data, dict):
                     continue
 
-                segments = sector_data.get("Segments", {})
-
+                segments = sector_data.get("Segments")
                 if isinstance(segments, list):
-                    segment_items = enumerate(segments)
-                else:
+                    segment_items: Iterable[tuple[int, JsonValue]] = enumerate(segments)
+                elif isinstance(segments, dict):
                     segment_items = ((int(k), v) for k, v in segments.items())
+                else:
+                    continue
 
                 for segment_idx, segment_data in segment_items:
                     if not isinstance(segment_data, dict):
                         continue
-                    if "Status" not in segment_data:
+                    status = segment_data.get("Status")
+                    if status is None:
                         continue
-
                     rows.append(
                         {
                             "timestamp": timestamp_ms,
                             "car_number": car_number,
                             "sector": sector_idx + 1,
                             "segment": segment_idx,
-                            "status": segment_data["Status"],
+                            "status": status,
                         }
                     )
 

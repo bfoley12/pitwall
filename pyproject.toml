@@ -52,6 +52,7 @@ ignore = [
     "E501",  # line length (handled by formatter)
     "D203",  # use D211 (no blank line before class)
     "D213",  # use D212 (summary on first line)
+    "ANN401", # Covered by basedpyright
 ]
 
 [tool.ruff.lint.isort]

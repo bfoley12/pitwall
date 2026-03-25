@@ -1,9 +1,9 @@
 import re
 from enum import IntEnum
-from typing import Any, ClassVar
+from typing import ClassVar, override
 
 import polars as pl
-from pydantic import model_validator
+from pydantic import JsonValue, model_validator
 
 from .base import F1DataContainer, F1Model, F1Stream
 
@@ -88,8 +88,8 @@ class DriverRaceInfoKeyframe(F1Model):
 
     @model_validator(mode="before")
     @classmethod
-    def _wrap(cls, data: Any) -> dict[str, Any]:
-        if isinstance(data, dict) and "drivers" not in data:
+    def _wrap(cls, data: dict[str, JsonValue]) -> dict[str, JsonValue]:
+        if "drivers" not in data:
             return {"drivers": data}
         return data
 
@@ -130,42 +130,46 @@ class DriverRaceInfoStream(F1Stream):
         "is_out": pl.Boolean(),
     }
 
+    @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        rows: list[dict[str, Any]] = []
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        rows: list[dict[str, JsonValue]] = []
 
         for car_number, update in data.items():
-            gap_raw: str | None = update.get("Gap")
-            interval_raw: str | None = update.get("Interval")
+            if not isinstance(update, dict):
+                continue
 
-            gap_seconds, laps_behind, is_leader, leader_lap = _parse_gap(gap_raw)
-            interval_seconds = _parse_interval(interval_raw)
+            gap_raw = update.get("Gap")
+            interval_raw = update.get("Interval")
+            gap_seconds, laps_behind, is_leader, leader_lap = _parse_gap(
+                gap_raw if isinstance(gap_raw, str) else None
+            )
+            interval_seconds = _parse_interval(
+                interval_raw if isinstance(interval_raw, str) else None
+            )
 
-            catching_raw: int | None = update.get("Catching")
-            overtake_raw: int | None = update.get("OvertakeState")
+            catching_raw = update.get("Catching")
+            overtake_raw = update.get("OvertakeState")
+            position_raw = update.get("Position")
 
             rows.append(
                 {
                     "timestamp": timestamp_ms,
                     "car_number": car_number,
-                    "position": (
-                        int(update["Position"]) if "Position" in update else None
-                    ),
+                    "position": int(position_raw)
+                    if isinstance(position_raw, (str, int))
+                    else None,
                     "gap_seconds": gap_seconds,
                     "laps_behind": laps_behind,
                     "interval_seconds": interval_seconds,
-                    "catching": (
-                        _CATCHING_MAP[catching_raw]
-                        if catching_raw is not None
-                        else None
-                    ),
-                    "overtake_state": (
-                        _OVERTAKE_MAP[overtake_raw]
-                        if overtake_raw is not None
-                        else None
-                    ),
+                    "catching": _CATCHING_MAP[catching_raw]
+                    if isinstance(catching_raw, int)
+                    else None,
+                    "overtake_state": _OVERTAKE_MAP[overtake_raw]
+                    if isinstance(overtake_raw, int)
+                    else None,
                     "is_leader": is_leader,
                     "leader_lap": leader_lap,
                     "pit_stops": update.get("PitStops"),
@@ -176,30 +180,36 @@ class DriverRaceInfoStream(F1Stream):
         return rows
 
     @classmethod
-    def _build_starting_grid(cls, first_entry: dict[str, Any]) -> pl.DataFrame:
+    def _build_starting_grid(cls, first_entry: dict[str, JsonValue]) -> pl.DataFrame:
         rows: list[dict[str, str | int]] = []
         for car_number, data in first_entry.items():
-            rows.append(
-                {
-                    "car_number": car_number,
-                    "position": int(data["Position"]),
-                }
-            )
+            if not isinstance(data, dict):
+                continue
+            position = data.get("Position")
+            if isinstance(position, (str, int)):
+                rows.append(
+                    {
+                        "car_number": car_number,
+                        "position": int(position),
+                    }
+                )
         return pl.DataFrame(rows, schema=_GRID_SCHEMA).sort("position")
 
     @model_validator(mode="before")
     @classmethod
-    def _from_entries(cls, raw: Any) -> Any:
+    def _from_entries(
+        cls, raw: list[dict[str, JsonValue]] | dict[str, object]
+    ) -> dict[str, object]:
         if not isinstance(raw, list) or not raw:
-            return raw
+            return raw if isinstance(raw, dict) else {}
 
-        # First entry is the grid snapshot
-        starting_grid = cls._build_starting_grid(raw[0]["Data"])
+        first_data = raw[0].get("Data")
+        if not isinstance(first_data, dict):
+            return {}
 
-        # Remaining entries are deltas
+        starting_grid = cls._build_starting_grid(first_data)
         frame = cls._build_dataframe(raw[1:])
 
-        # Deduplicate corrections at identical timestamps
         frame = (
             frame.with_row_index("_row_idx")
             .filter(
@@ -208,7 +218,6 @@ class DriverRaceInfoStream(F1Stream):
             )
             .drop("_row_idx")
         )
-
         frame = frame.with_columns(
             pl.col("catching").cast(pl.Categorical),
             pl.col("overtake_state").cast(pl.Categorical),

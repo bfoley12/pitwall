@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Any, ClassVar, override
+from typing import ClassVar, override
 
 import polars as pl
-from pydantic import Field
+from pydantic import Field, JsonValue
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream
 from pitwall.api_handler.models.pit_stop import PitStopKeyframe
@@ -30,26 +30,37 @@ class PitStopSeriesStream(F1Stream):
     @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        rows: list[dict[str, Any]] = []
-        value: dict[str, Any] = {}
-        for racing_number, line in data["PitTimes"].items():
-            value = next(iter(line.values())) if isinstance(line, dict) else line[0]
-            rows.extend(
-                [
-                    {
-                        "timestamp": timestamp_ms,
-                        "utc": cls._parse_utc(value["Timestamp"])
-                        if "Timestamp" in value
-                        else None,
-                        "racing_number": racing_number,
-                        "pit_stop_time": value["PitStop"].get("PitStopTime"),
-                        "pit_lane_time": value["PitStop"].get("PitLaneTime"),
-                        "lap": value["PitStop"].get("Lap"),
-                    }
-                ]
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        rows: list[dict[str, JsonValue]] = []
+        pit_times = cls._as_dict(data.get("PitTimes"))
+
+        for racing_number, line in pit_times.items():
+            if isinstance(line, dict):
+                value = next(iter(line.values()), None)
+            elif isinstance(line, list) and line:
+                value = line[0]
+            else:
+                continue
+
+            if not isinstance(value, dict):
+                continue
+
+            pit_stop = cls._as_dict(value.get("PitStop"))
+
+            rows.append(
+                {
+                    "timestamp": timestamp_ms,
+                    "utc": value["Timestamp"]
+                    if isinstance(value.get("Timestamp"), str)
+                    else None,
+                    "racing_number": racing_number,
+                    "pit_stop_time": pit_stop.get("PitStopTime"),
+                    "pit_lane_time": pit_stop.get("PitLaneTime"),
+                    "lap": pit_stop.get("Lap"),
+                }
             )
+
         return rows
 
 

@@ -1,8 +1,8 @@
 from collections.abc import ItemsView
-from typing import Any, ClassVar
+from typing import ClassVar, override
 
 import polars as pl
-from pydantic import Field, model_validator
+from pydantic import Field, JsonValue, model_validator
 
 from .base import F1DataContainer, F1Model, F1Stream
 
@@ -42,8 +42,8 @@ class DriverListKeyframe(F1Model):
 
     @model_validator(mode="before")
     @classmethod
-    def _wrap(cls, data: Any) -> dict[str, Any]:
-        if isinstance(data, dict) and "drivers" not in data:
+    def _wrap(cls, data: dict[str, JsonValue]) -> dict[str, JsonValue]:
+        if "drivers" not in data:
             return {"drivers": data}
         return data
 
@@ -57,10 +57,11 @@ class DriverListStream(F1Stream):
         "line": pl.UInt8(),
     }
 
+    @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
         return [
             {
                 "timestamp": timestamp_ms,
@@ -68,7 +69,7 @@ class DriverListStream(F1Stream):
                 "line": update.get("Line"),
             }
             for car_number, update in data.items()
-            if "Line" in update
+            if isinstance(update, dict) and "Line" in update
         ]
 
 

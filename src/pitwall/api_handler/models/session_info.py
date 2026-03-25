@@ -1,6 +1,6 @@
-from typing import Any, ClassVar
+from typing import ClassVar
 
-from pydantic import model_validator
+from pydantic import JsonValue, model_validator
 
 from .archive_status import ArchiveStatusFrame
 from .base import F1DataContainer, F1Model
@@ -17,10 +17,9 @@ class SessionInfoKeyframe(F1Model):
 
     @model_validator(mode="before")
     @classmethod
-    def _extract_session(cls, data: Any) -> Any:
-        if not isinstance(data, dict) or "session" in data:
+    def _extract_session(cls, data: dict[str, JsonValue]) -> dict[str, JsonValue]:
+        if "session" in data:
             return data
-
         session_keys = {
             "Key",
             "Type",
@@ -31,8 +30,7 @@ class SessionInfoKeyframe(F1Model):
             "GmtOffset",
             "Path",
         }
-        session_data = {k: v for k, v in data.items() if k in session_keys}
-        data["session"] = session_data
+        data["session"] = {k: v for k, v in data.items() if k in session_keys}
         return data
 
 

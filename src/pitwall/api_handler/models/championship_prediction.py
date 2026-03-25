@@ -1,7 +1,7 @@
-from typing import Any, ClassVar
+from typing import ClassVar, override
 
 import polars as pl
-from pydantic import model_validator
+from pydantic import JsonValue, model_validator
 
 from .base import F1DataContainer, F1Model, F1Stream
 
@@ -50,19 +50,26 @@ class DriverPredictionStream(F1Stream):
         "predicted_points": pl.Float64(),
     }
 
+    @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        return [
-            {
-                "timestamp": timestamp_ms,
-                "car_number": car_number,
-                "predicted_position": update.get("PredictedPosition"),
-                "predicted_points": update.get("PredictedPoints"),
-            }
-            for car_number, update in data.get("Drivers", {}).items()
-        ]
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        rows: list[dict[str, JsonValue]] = []
+        drivers = cls._as_dict(data.get("Drivers"))
+
+        for car_number, update in drivers.items():
+            if not isinstance(update, dict):
+                continue
+            rows.append(
+                {
+                    "timestamp": timestamp_ms,
+                    "car_number": car_number,
+                    "predicted_position": update.get("PredictedPosition"),
+                    "predicted_points": update.get("PredictedPoints"),
+                }
+            )
+        return rows
 
 
 class TeamPredictionStream(F1Stream):
@@ -73,19 +80,27 @@ class TeamPredictionStream(F1Stream):
         "predicted_points": pl.Float64(),
     }
 
+    @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        return [
-            {
-                "timestamp": timestamp_ms,
-                "team_key": team_key,
-                "predicted_position": update.get("PredictedPosition"),
-                "predicted_points": update.get("PredictedPoints"),
-            }
-            for team_key, update in data.get("Teams", {}).items()
-        ]
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        rows: list[dict[str, JsonValue]] = []
+        teams = cls._as_dict(data.get("Teams"))
+
+        for team_key, update in teams.items():
+            if not isinstance(update, dict):
+                continue
+            rows.append(
+                {
+                    "timestamp": timestamp_ms,
+                    "team_key": team_key,
+                    "predicted_position": update.get("PredictedPosition"),
+                    "predicted_points": update.get("PredictedPoints"),
+                }
+            )
+
+        return rows
 
 
 # ── Container ─────────────────────────────────────────
@@ -107,19 +122,17 @@ class ChampionshipPrediction(F1DataContainer):
 
     @model_validator(mode="before")
     @classmethod
-    def _split_stream(cls, raw: Any) -> dict[str, Any]:
+    def _split_stream(
+        cls, raw: dict[str, JsonValue] | list[JsonValue]
+    ) -> dict[str, JsonValue] | list[JsonValue]:
         if not isinstance(raw, dict):
             return raw
-
-        result: dict[str, Any] = {}
-
-        if "keyframe" in raw and raw["keyframe"] is not None:
-            result["keyframe"] = raw["keyframe"]
-
+        result: dict[str, JsonValue] = {}
+        keyframe = raw.get("keyframe")
+        if keyframe is not None:
+            result["keyframe"] = keyframe
         entries = raw.get("stream")
         if entries is not None:
-            # Same entries fed to both stream classes
             result["drivers"] = entries
             result["teams"] = entries
-
         return result

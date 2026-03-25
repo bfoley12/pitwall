@@ -1,4 +1,5 @@
 import re
+from collections.abc import Iterable
 from datetime import datetime
 from typing import Any, ClassVar, TypeVar
 
@@ -20,18 +21,26 @@ class F1Model(BaseModel):
         populate_by_name=True, alias_generator=to_pascal
     )
 
+    @staticmethod
+    def _as_dict(value: JsonValue) -> dict[str, JsonValue]:
+        return value if isinstance(value, dict) else {}
+
+    @staticmethod
+    def _as_str(value: JsonValue) -> str:
+        return value if isinstance(value, str) else ""
+
 
 class F1Frame(F1Model):
     @model_validator(mode="wrap")
     @classmethod
-    def _unwrap_list(
+    def _unwrap_list(  # pyright: ignore[reportAny]
         cls,
         data: list[dict[str, JsonValue]] | dict[str, JsonValue],
         handler: ValidatorFunctionWrapHandler,
-    ) -> Any:
+    ) -> Any:  # pyright: ignore[reportExplicitAny] — constrained by Pydantic's handler signature
         if isinstance(data, list):
             data = data[0]
-        return handler(data)
+        return handler(data)  # pyright: ignore[reportAny]
 
 
 class F1Stream(F1Model):
@@ -86,32 +95,43 @@ class F1Stream(F1Model):
         return minutes * 60_000 + seconds * 1_000 + millis
 
     @classmethod
-    def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        """Default: map SCHEMA keys to PascalCase lookups in data.
-
-        Override for feeds with nested structure (per-car dicts, etc).
-        """
-        row: dict[str, Any] = {}
-        for key in cls.SCHEMA:
-            if key == "timestamp":
-                row["timestamp"] = timestamp_ms
-            else:
-                row[key] = data.get(cls._to_pascal(key))
-        return [row]
+    def _iter_lines(
+        cls, data: dict[str, JsonValue]
+    ) -> Iterable[tuple[str, dict[str, JsonValue]]]:
+        """Yield (car_number, car_data) pairs from Lines dict."""
+        for car_number, car_data in cls._as_dict(data.get("Lines")).items():
+            if isinstance(car_data, dict):
+                yield car_number, car_data
 
     @classmethod
-    def _build_dataframe(cls, entries: list[dict[str, Any]]) -> pl.DataFrame:
-        rows: list[dict[str, Any]] = []
+    def _extract_rows(
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        """Default: map SCHEMA keys to PascalCase lookups in data.
+        Override for feeds with nested structure.
+        """
+        return [
+            {
+                key: timestamp_ms
+                if key == "timestamp"
+                else data.get(cls._to_pascal(key))
+                for key in cls.SCHEMA
+            }
+        ]
+
+    @classmethod
+    def _build_dataframe(cls, entries: list[dict[str, JsonValue]]) -> pl.DataFrame:
+        rows: list[dict[str, JsonValue]] = []
         for entry in entries:
-            ts_ms = cls._parse_timestamp(entry["Timestamp"])
-            rows.extend(cls._extract_rows(ts_ms, entry["Data"]))
+            ts_ms = cls._parse_timestamp(cls._as_str(entry["Timestamp"]))
+            rows.extend(cls._extract_rows(ts_ms, cls._as_dict(entry["Data"])))
         return pl.DataFrame(rows, schema=cls.SCHEMA)
 
     @model_validator(mode="before")
     @classmethod
-    def _from_entries(cls, raw: Any) -> dict[str, Any]:
+    def _from_entries(
+        cls, raw: list[dict[str, JsonValue]] | dict[str, object]
+    ) -> dict[str, object]:
         if isinstance(raw, list):
             return {"data": cls._build_dataframe(raw)}
         return raw

@@ -1,4 +1,4 @@
-from typing import Any, ClassVar
+from typing import ClassVar, override
 
 import polars as pl
 from pydantic import JsonValue, model_validator
@@ -37,16 +37,19 @@ class ContentStreamsStream(F1Stream):
         "utc": pl.Utf8(),
     }
 
+    @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
         raw_streams = data.get("Streams", [])
 
         if isinstance(raw_streams, list):
             streams = raw_streams
-        else:
+        elif isinstance(raw_streams, dict):
             streams = list(raw_streams.values())
+        else:
+            streams = []
 
         return [
             {

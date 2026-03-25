@@ -1,6 +1,7 @@
-from typing import Any, ClassVar
+from typing import ClassVar, override
 
 import polars as pl
+from pydantic import JsonValue
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream
 
@@ -22,12 +23,17 @@ class PitStopStream(F1Stream):
         "lap": pl.UInt8(),
     }
 
+    @override
     @classmethod
-    def _build_dataframe(cls, entries: list[dict[str, Any]]) -> pl.DataFrame:
-        rows: list[dict[str, Any]] = []
+    def _build_dataframe(cls, entries: list[dict[str, JsonValue]]) -> pl.DataFrame:
+        rows: list[dict[str, JsonValue]] = []
         for entry in entries:
-            ts_ms = cls._parse_timestamp(entry["Timestamp"])
-            row = cls._extract_rows(ts_ms, entry["Data"])
+            ts_ms = cls._parse_timestamp(
+                entry["Timestamp"] if isinstance(entry["Timestamp"], str) else "0"
+            )
+            row = cls._extract_rows(
+                ts_ms, entry["Data"] if isinstance(entry["Data"], dict) else {}
+            )
             if row[0]["lap"] is None:
                 row[0]["lap"] = rows[-1]["lap"]
             rows.extend(row)

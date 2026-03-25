@@ -1,6 +1,7 @@
-from typing import Any, ClassVar, override
+from typing import ClassVar, override
 
 import polars as pl
+from pydantic import JsonValue
 
 from pitwall.api_handler.models.base import F1DataContainer, F1Stream
 
@@ -20,21 +21,27 @@ class PositionStream(F1Stream):
     @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        rows = [
-            {
-                "utc": cls._parse_utc(data["Timestamp"]),
-                "timestamp": timestamp_ms,
-                "racing_number": racing_number,
-                "status": entry["Status"],
-                "x": entry["X"],
-                "y": entry["Y"],
-                "z": entry["Z"],
-            }
-            for racing_number, pos in data["Entries"].items()
-            for entry in [pos]
-        ]
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
+        rows: list[dict[str, JsonValue]] = []
+        utc_raw = data.get("Timestamp")
+        utc = utc_raw if isinstance(utc_raw, str) else None
+        entries = cls._as_dict(data.get("Entries"))
+
+        for racing_number, entry in entries.items():
+            if not isinstance(entry, dict):
+                continue
+            rows.append(
+                {
+                    "utc": utc,
+                    "timestamp": timestamp_ms,
+                    "racing_number": racing_number,
+                    "status": entry.get("Status"),
+                    "x": entry.get("X"),
+                    "y": entry.get("Y"),
+                    "z": entry.get("Z"),
+                }
+            )
 
         return rows
 

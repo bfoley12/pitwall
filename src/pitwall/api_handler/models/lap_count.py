@@ -1,7 +1,7 @@
-from typing import Any, ClassVar
+from typing import ClassVar, override
 
 import polars as pl
-from pydantic import model_validator
+from pydantic import JsonValue, model_validator
 
 from .base import F1DataContainer, F1Frame, F1Stream
 
@@ -20,27 +20,33 @@ class LapCountStream(F1Stream):
     total_laps: int = 0
     current_lap: int = 0
 
+    @override
     @classmethod
     def _extract_rows(
-        cls, timestamp_ms: int, data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+        cls, timestamp_ms: int, data: dict[str, JsonValue]
+    ) -> list[dict[str, JsonValue]]:
         return [
             {
-                "lap": data["CurrentLap"],
+                "lap": data.get("CurrentLap"),
                 "timestamp": timestamp_ms,
             }
         ]
 
     @model_validator(mode="before")
     @classmethod
-    def _from_entries(cls, raw: Any) -> Any:
+    def _from_entries(
+        cls, raw: list[dict[str, JsonValue]] | dict[str, object]
+    ) -> dict[str, object]:
         if not isinstance(raw, list) or not raw:
-            return raw
+            return raw if isinstance(raw, dict) else {}
 
         total_laps: int = 0
         for entry in raw:
-            if "TotalLaps" in entry["Data"]:
-                total_laps = entry["Data"]["TotalLaps"]
+            entry_data = entry.get("Data")
+            if isinstance(entry_data, dict):
+                tl = entry_data.get("TotalLaps")
+                if isinstance(tl, int):
+                    total_laps = tl
 
         frame = cls._build_dataframe(raw)
         current_lap = frame["lap"].max() if len(frame) > 0 else 0

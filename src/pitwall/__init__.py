@@ -1,3 +1,3 @@
-from .api_handler import DirectClient
+from .api_handler import AsyncDirectClient, DirectClient
 
-__all__ = ["DirectClient"]
+__all__ = ["AsyncDirectClient", "DirectClient"]

@@ -105,6 +105,13 @@ class Session(F1Model):
             raise ValueError("Session has no path")
         return self.path.split("/")[2]
 
+    def match(self, query: str) -> bool:
+        return (
+            query.casefold() in self.sub_type.casefold()
+            if self.sub_type is not None
+            else False
+        )
+
 
 class FeedName(StrEnum):
     SESSION_INFO = "SessionInfo"

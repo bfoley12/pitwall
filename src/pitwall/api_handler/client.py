@@ -18,6 +18,8 @@ import pitwall.api_handler.registry as registry
 from pitwall.api_handler.models.base import F1KeyframeContainer
 from pitwall.api_handler.models.meeting import Meeting
 from pitwall.api_handler.models.season import Season
+from pitwall.api_handler.models.session import SessionSubType
+from pitwall.api_handler.settings import ClientSettings
 
 _SESSION_ALIASES: dict[str, str] = {
     "practice_1": "Practice_1",
@@ -82,21 +84,19 @@ def _decompress(blob: str) -> dict[str, JsonValue]:
 class _BaseClient:
     _BASE_URL: Final[str] = "https://livetiming.formula1.com/static"
 
-    def __init__(
-        self,
-        *,
-        connect: float = 5.0,
-        read: float = 30.0,
-        max_connections: int = 10,
-        max_keepalive_connections: int = 5,
-        follow_redirects: bool = True,
-    ) -> None:
-        self._TIMEOUT: httpx.Timeout = httpx.Timeout(connect=connect, read=read)
-        self._LIMITS: httpx.Limits = httpx.Limits(
-            max_connections=max_connections,
-            max_keepalive_connections=max_keepalive_connections,
+    def __init__(self, *, settings: ClientSettings | None = None) -> None:
+        if settings is None:
+            settings = ClientSettings()
+
+        self._settings: ClientSettings = settings
+        self._TIMEOUT: httpx.Timeout = httpx.Timeout(
+            timeout=settings.timeout, connect=settings.connect, read=settings.read
         )
-        self._FOLLOW_REDIRECTS: bool = follow_redirects
+        self._LIMITS: httpx.Limits = httpx.Limits(
+            max_connections=settings.max_connections,
+            max_keepalive_connections=settings.max_keepalive_connections,
+        )
+        self._FOLLOW_REDIRECTS: bool = settings.follow_redirects
         self._season_cache: dict[int, Season] = {}
 
     def clear_cache(self) -> None:
@@ -118,6 +118,7 @@ class _BaseClient:
         if meeting is not None:
             if year is None:
                 raise ValueError("year is required when specifying meeting")
+
             parts.append(meeting)
 
         if session is not None:
@@ -179,22 +180,10 @@ class _BaseClient:
 
 
 class AsyncDirectClient(_BaseClient):
-    def __init__(
-        self,
-        *,
-        connect: float = 5.0,
-        read: float = 30.0,
-        max_connections: int = 10,
-        max_keepalive_connections: int = 5,
-        follow_redirects: bool = True,
-    ) -> None:
-        super().__init__(
-            connect=connect,
-            read=read,
-            max_connections=max_connections,
-            max_keepalive_connections=max_keepalive_connections,
-            follow_redirects=follow_redirects,
-        )
+    def __init__(self, *, settings: ClientSettings | None = None) -> None:
+        if settings is None:
+            settings = ClientSettings()
+        super().__init__(settings=settings)
         self._client: httpx.AsyncClient = httpx.AsyncClient(
             timeout=self._TIMEOUT,
             limits=self._LIMITS,
@@ -235,25 +224,27 @@ class AsyncDirectClient(_BaseClient):
         resolved = registry.get(model) if isinstance(model, str) else model
 
         tasks: dict[str, asyncio.Task[list[dict[str, JsonValue]]]] = {}
-        if resolved.KEYFRAME_FILE is not None:
-            tasks["keyframe"] = asyncio.create_task(
-                self.fetch(
-                    year=year,
-                    meeting=meeting,
-                    session=session,
-                    file=resolved.KEYFRAME_FILE,
-                )
-            )
-        if resolved.STREAM_FILE is not None:
-            tasks["stream"] = asyncio.create_task(
-                self.fetch(
-                    year=year,
-                    meeting=meeting,
-                    session=session,
-                    file=resolved.STREAM_FILE,
-                )
-            )
-        raw = {k: await t for k, t in tasks.items()}
+        async with asyncio.timeout(self._settings.request_timeout):
+            async with asyncio.TaskGroup() as tg:
+                if resolved.KEYFRAME_FILE is not None:
+                    tasks["keyframe"] = tg.create_task(
+                        self.fetch(
+                            year=year,
+                            meeting=meeting,
+                            session=session,
+                            file=resolved.KEYFRAME_FILE,
+                        )
+                    )
+                if resolved.STREAM_FILE is not None:
+                    tasks["stream"] = tg.create_task(
+                        self.fetch(
+                            year=year,
+                            meeting=meeting,
+                            session=session,
+                            file=resolved.STREAM_FILE,
+                        )
+                    )
+        raw = {k: t.result() for k, t in tasks.items()}
         return resolved.model_validate(raw)
 
     async def get_season(self, year: int) -> Season:
@@ -274,6 +265,8 @@ class AsyncDirectClient(_BaseClient):
         session: str | None = None,
         file: str = "Index.json",
     ) -> list[dict[str, JsonValue]]:
+        if meeting is not None and year is not None:
+            meeting = (await self.get_meeting(year=year, meeting=meeting)).folder_name
         url = self._build_url(year=year, meeting=meeting, session=session, file=file)
         response = (await self._client.get(url)).raise_for_status()
         return self._decode_response(response, file)
@@ -292,22 +285,10 @@ class AsyncDirectClient(_BaseClient):
 
 
 class DirectClient(_BaseClient):
-    def __init__(
-        self,
-        *,
-        connect: float = 5.0,
-        read: float = 30.0,
-        max_connections: int = 10,
-        max_keepalive_connections: int = 5,
-        follow_redirects: bool = True,
-    ) -> None:
-        super().__init__(
-            connect=connect,
-            read=read,
-            max_connections=max_connections,
-            max_keepalive_connections=max_keepalive_connections,
-            follow_redirects=follow_redirects,
-        )
+    def __init__(self, *, settings: ClientSettings | None = None) -> None:
+        if settings is None:
+            settings = ClientSettings()
+        super().__init__(settings=settings)
         self._client: httpx.Client = httpx.Client(
             timeout=self._TIMEOUT,
             limits=self._LIMITS,
@@ -343,12 +324,15 @@ class DirectClient(_BaseClient):
         model: str | type[F1KeyframeContainer],
         year: int,
         meeting: str | None = None,
-        session: str | None = None,
+        session: str | SessionSubType | None = None,
     ) -> F1KeyframeContainer:
         resolved = registry.get(model) if isinstance(model, str) else model
+        if isinstance(session, str):
+            session = SessionSubType.parse(session)
 
         raw: dict[str, object] = {}
         if resolved.KEYFRAME_FILE is not None:
+            breakpoint()
             raw["keyframe"] = self.fetch(
                 year=year,
                 meeting=meeting,
@@ -379,10 +363,16 @@ class DirectClient(_BaseClient):
         self,
         year: int | None = None,
         meeting: str | None = None,
-        session: str | None = None,
+        session: SessionSubType | None = None,
         file: str = "Index.json",
     ) -> list[dict[str, JsonValue]]:
+        if meeting is not None and year is not None:
+            full_meeting = self.get_meeting(year=year, meeting=meeting)
+            meeting = full_meeting.folder_name
+            if session is not None:
+                session = full_meeting.get_session(session.value).folder_name  # pyright: ignore[reportAssignmentType]
         url = self._build_url(year=year, meeting=meeting, session=session, file=file)
+        breakpoint()
         response = self._client.get(url).raise_for_status()
         return self._decode_response(response, file)
 
@@ -391,7 +381,7 @@ class DirectClient(_BaseClient):
         self,
         year: int | None = None,
         meeting: str | None = None,
-        session: str | None = None,
+        session: SessionSubType | None = None,
         file: str = "Index.json",
     ) -> dict[str, JsonValue]:
         return self.fetch(year=year, meeting=meeting, session=session, file=file)[0]

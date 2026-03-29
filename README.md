@@ -12,6 +12,13 @@ Users may get data in a two ways:
     - methods such as get_overtakes, get_stints, etc.
     - transforms and formats the raw data according to the method and intended use
 
-  ## Usage
-  ### DirectClient/AsyncDirectClient
-  temp text
+## Data Description
+- ArchiveStatus
+  - Keyframe: signal for whether the archiving is complete
+  - Stream: status of the archiving process
+- CarData
+  - Keyframe: 
+  - Stream: 
+## Usage
+### DirectClient/AsyncDirectClient
+temp text

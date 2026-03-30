@@ -21,5 +21,5 @@ class ArchiveStatus(F1DataContainer[ArchiveStatusFrame, ArchiveStatusStream]):
     KEYFRAME_FILE: ClassVar[str | None] = "ArchiveStatus.json"
     STREAM_FILE: ClassVar[str | None] = "ArchiveStatus.jsonStream"
 
-    frame: ArchiveStatusFrame
+    keyframe: ArchiveStatusFrame
     stream: ArchiveStatusStream

@@ -15,6 +15,8 @@ from pitwall.api_handler.registry import register
 
 def parse_lap_time(value: str) -> timedelta:
     """Parse F1 lap time string like '1:26.933' or '26.933' into timedelta."""
+    if value == "":
+        return timedelta(minutes=0, seconds=0, milliseconds=0)
     match = re.fullmatch(r"(?:(\d+):)?(\d+)\.(\d+)", value)
     if not match:
         raise ValueError(f"Invalid lap time: {value!r}")

@@ -44,13 +44,6 @@ _SESSION_ALIASES: dict[str, str] = {
 }
 
 
-def _resolve_session_key(raw: str) -> str:
-    normalized = raw.strip().replace(" ", "_").lower()
-    if normalized not in _SESSION_ALIASES:
-        raise ValueError(f"Unknown session: {raw!r}")
-    return _SESSION_ALIASES[normalized]
-
-
 def _validate_year(year: int) -> None:
     start = 2018
     end = date.today().year
@@ -124,7 +117,7 @@ class _BaseClient:
         if session is not None:
             if meeting is None:
                 raise ValueError("meeting is required when specifying session")
-            parts.append(_resolve_session_key(session))
+            parts.append(session)
 
         parts.append(file)
         return "/".join(parts)
@@ -332,7 +325,6 @@ class DirectClient(_BaseClient):
 
         raw: dict[str, object] = {}
         if resolved.KEYFRAME_FILE is not None:
-            breakpoint()
             raw["keyframe"] = self.fetch(
                 year=year,
                 meeting=meeting,
@@ -372,7 +364,6 @@ class DirectClient(_BaseClient):
             if session is not None:
                 session = full_meeting.get_session(session.value).folder_name  # pyright: ignore[reportAssignmentType]
         url = self._build_url(year=year, meeting=meeting, session=session, file=file)
-        breakpoint()
         response = self._client.get(url).raise_for_status()
         return self._decode_response(response, file)
 

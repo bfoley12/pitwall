@@ -194,8 +194,6 @@ class TimingStats(F1DataContainer[TimingStatsKeyframe, TimingStatsStream]):
     @model_validator(mode="before")
     @classmethod
     def _split_stream(cls, raw: dict[str, object]) -> dict[str, object]:
-        breakpoint()
-
         result: dict[str, object] = {}
 
         if "keyframe" in raw and raw["keyframe"] is not None:

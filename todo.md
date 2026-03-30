@@ -1,4 +1,3 @@
-- DriverTracker (already covered in Timing)
 - ExtrapolatedClock (seems useless)
 - SessionStatus (seems useless)
 - TopThree (redundant position info)

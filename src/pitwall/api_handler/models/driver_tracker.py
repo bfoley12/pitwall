@@ -68,7 +68,9 @@ class DriverTrackerStream(F1Stream):
                     "timestamp": timestamp_ms,
                     "racing_number": racing_number,
                     "lap_state": driver_data.get("LapState"),
-                    "lap_time": cls._parse_lap_time(cast(str, driver_data.get("LapTime"))),
+                    "lap_time": cls._parse_lap_time(
+                        cast(str, driver_data.get("LapTime"))
+                    ),
                     "diff_to_ahead": cls.parse_gap(driver_data.get("DiffToAhead")),
                     "diff_to_leader": cls.parse_gap(driver_data.get("DiffToLeader")),
                 }

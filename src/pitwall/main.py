@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 import typer
-import polars as pl
 
 from pitwall.api_handler.client import DirectClient
 from pitwall.api_handler.models.archive_status import ArchiveStatus

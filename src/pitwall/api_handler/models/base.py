@@ -14,6 +14,9 @@ from pydantic import (
 from pydantic.alias_generators import to_pascal
 
 
+ParsedValue = JsonValue | datetime
+
+
 class F1Model(BaseModel):
     """Base for all Pydantic models."""
 
@@ -103,10 +106,11 @@ class F1Stream(F1Model):
             if isinstance(car_data, dict):
                 yield car_number, car_data
 
+    # TODO: Find better abstraction. I'm overwriting this in pretty much every single subclass
     @classmethod
     def _extract_rows(
         cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
+    ) -> list[dict[str, ParsedValue]]:
         """Default: map SCHEMA keys to PascalCase lookups in data.
         Override for feeds with nested structure.
         """
@@ -121,7 +125,7 @@ class F1Stream(F1Model):
 
     @classmethod
     def _build_dataframe(cls, entries: list[dict[str, JsonValue]]) -> pl.DataFrame:
-        rows: list[dict[str, JsonValue]] = []
+        rows: list[dict[str, ParsedValue]] = []
         for entry in entries:
             ts_ms = cls._parse_timestamp(cls._as_str(entry["Timestamp"]))
             rows.extend(cls._extract_rows(ts_ms, cls._as_dict(entry["Data"])))

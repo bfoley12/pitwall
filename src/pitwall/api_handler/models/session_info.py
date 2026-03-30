@@ -6,7 +6,7 @@ from pydantic import JsonValue, model_validator
 from pitwall.api_handler.registry import register
 
 from .archive_status import ArchiveStatusFrame
-from .base import F1DataContainer, F1Frame, F1Stream
+from .base import F1DataContainer, F1Frame, F1Stream, ParsedValue
 from .meeting_data import MeetingData
 from .session import Session
 
@@ -66,7 +66,7 @@ class SessionInfoStream(F1Stream):
     @classmethod
     def _extract_rows(
         cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
+    ) -> list[dict[str, ParsedValue]]:
         meeting = cls._as_dict(data.get("Meeting"))
         country = cls._as_dict(meeting.get("Country"))
         circuit = cls._as_dict(meeting.get("Circuit"))

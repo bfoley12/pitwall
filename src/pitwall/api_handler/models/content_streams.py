@@ -5,7 +5,7 @@ from pydantic import JsonValue, model_validator
 
 from pitwall.api_handler.registry import register
 
-from .base import F1DataContainer, F1Frame, F1Model, F1Stream
+from .base import F1DataContainer, F1Frame, F1Model, F1Stream, ParsedValue
 
 
 class ContentStream(F1Model):
@@ -43,7 +43,7 @@ class ContentStreamsStream(F1Stream):
     @classmethod
     def _extract_rows(
         cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
+    ) -> list[dict[str, ParsedValue]]:
         raw_streams = data.get("Streams", [])
 
         if isinstance(raw_streams, list):

@@ -3,7 +3,7 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import JsonValue
 
-from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream
+from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream, ParsedValue
 from pitwall.api_handler.registry import register
 
 
@@ -28,8 +28,8 @@ class PositionStream(F1Stream):
     @classmethod
     def _extract_rows(
         cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
-        rows: list[dict[str, JsonValue]] = []
+    ) -> list[dict[str, ParsedValue]]:
+        rows: list[dict[str, ParsedValue]] = []
         utc_raw = data.get("Timestamp")
         utc = utc_raw if isinstance(utc_raw, str) else None
         entries = cls._as_dict(data.get("Entries"))

@@ -7,7 +7,7 @@ from pydantic import Discriminator, Field, JsonValue, Tag, model_validator
 
 from pitwall.api_handler.registry import register
 
-from .base import F1DataContainer, F1Frame, F1Model, F1Stream
+from .base import F1DataContainer, F1Frame, F1Model, F1Stream, ParsedValue
 
 
 class FlagType(StrEnum):
@@ -142,7 +142,7 @@ class RaceControlMessagesStream(F1Stream):
     @classmethod
     def _extract_rows(
         cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
+    ) -> list[dict[str, ParsedValue]]:
         raw_msgs = data.get("Messages")
         if isinstance(raw_msgs, list):
             messages = raw_msgs
@@ -151,7 +151,7 @@ class RaceControlMessagesStream(F1Stream):
         else:
             return []
 
-        rows: list[dict[str, JsonValue]] = []
+        rows: list[dict[str, ParsedValue]] = []
         for msg in messages:
             if not isinstance(msg, dict):
                 continue

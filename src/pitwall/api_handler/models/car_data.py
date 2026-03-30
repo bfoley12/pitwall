@@ -3,7 +3,7 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import JsonValue
 
-from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream
+from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream, ParsedValue
 from pitwall.api_handler.registry import register
 
 # TODO: Decode Keyframe too (not actually informative, but just for completeness)
@@ -42,10 +42,10 @@ class CarDataStream(F1Stream):
     @classmethod
     def _extract_rows(
         cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
-        rows: list[dict[str, JsonValue]] = []
+    ) -> list[dict[str, ParsedValue]]:
+        rows: list[dict[str, ParsedValue]] = []
         utc_raw = data.get("Utc")
-        utc = utc_raw if isinstance(utc_raw, str) else None
+        utc = cls._parse_utc(cls._as_str(utc_raw)) if isinstance(utc_raw, str) else None
         cars = cls._as_dict(data.get("Cars"))
 
         for racing_num, car in cars.items():

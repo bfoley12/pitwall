@@ -3,7 +3,7 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import JsonValue
 
-from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream
+from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream, ParsedValue
 from pitwall.api_handler.registry import register
 
 
@@ -20,8 +20,8 @@ class PitLaneTimeCollectionStream(F1Stream):
     @classmethod
     def _extract_rows(
         cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
-        rows: list[dict[str, JsonValue]] = []
+    ) -> list[dict[str, ParsedValue]]:
+        rows: list[dict[str, ParsedValue]] = []
         pit_times = data.get("PitTimes")
         if not isinstance(pit_times, dict):
             return rows
@@ -55,7 +55,7 @@ class PitLaneTimeCollectionStream(F1Stream):
     @override
     @classmethod
     def _build_dataframe(cls, entries: list[dict[str, JsonValue]]) -> pl.DataFrame:
-        rows: list[dict[str, JsonValue]] = []
+        rows: list[dict[str, ParsedValue]] = []
         for entry in entries:
             ts_ms = cls._parse_timestamp(
                 entry["Timestamp"] if isinstance(entry["Timestamp"], str) else "0"

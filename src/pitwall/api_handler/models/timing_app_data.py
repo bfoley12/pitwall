@@ -8,7 +8,7 @@ from pitwall.api_handler.models.current_tyres import TyreCompound
 from pitwall.api_handler.models.timing_data import LapTime
 from pitwall.api_handler.registry import register
 
-from .base import F1DataContainer, F1Frame, F1Model, F1Stream
+from .base import F1DataContainer, F1Frame, F1Model, F1Stream, ParsedValue
 
 
 # Most field duplicated in tyre_stint_series.py: TyreStintInfo
@@ -76,8 +76,8 @@ class TimingAppStream(F1Stream):
     @classmethod
     def _extract_rows(
         cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
-        rows: list[dict[str, JsonValue]] = []
+    ) -> list[dict[str, ParsedValue]]:
+        rows: list[dict[str, ParsedValue]] = []
         data = cls._as_dict(data.get("Lines", {}))
         for car_number, _ in data.items():
             raw_stints = cls._as_dict(data.get("Stints", {}))

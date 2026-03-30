@@ -4,7 +4,7 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import Field, JsonValue
 
-from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream
+from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream, ParsedValue
 from pitwall.api_handler.models.pit_stop import PitStopKeyframe
 from pitwall.api_handler.registry import register
 
@@ -32,8 +32,8 @@ class PitStopSeriesStream(F1Stream):
     @classmethod
     def _extract_rows(
         cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
-        rows: list[dict[str, JsonValue]] = []
+    ) -> list[dict[str, ParsedValue]]:
+        rows: list[dict[str, ParsedValue]] = []
         pit_times = cls._as_dict(data.get("PitTimes"))
 
         for racing_number, line in pit_times.items():

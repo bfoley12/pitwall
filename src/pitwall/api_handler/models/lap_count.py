@@ -5,7 +5,7 @@ from pydantic import JsonValue, model_validator
 
 from pitwall.api_handler.registry import register
 
-from .base import F1DataContainer, F1Frame, F1Stream
+from .base import F1DataContainer, F1Frame, F1Stream, ParsedValue
 
 
 class LapCountStream(F1Stream):
@@ -26,7 +26,7 @@ class LapCountStream(F1Stream):
     @classmethod
     def _extract_rows(
         cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
+    ) -> list[dict[str, ParsedValue]]:
         return [
             {
                 "lap": data.get("CurrentLap"),

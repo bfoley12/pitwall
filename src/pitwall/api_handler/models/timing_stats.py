@@ -7,7 +7,7 @@ from pydantic import Field, JsonValue, field_validator, model_validator
 
 from pitwall.api_handler.registry import register
 
-from .base import F1DataContainer, F1Frame, F1Model, F1Stream
+from .base import F1DataContainer, F1Frame, F1Model, F1Stream, ParsedValue
 from .session import SessionType
 from .timing_data import parse_lap_time
 
@@ -97,8 +97,8 @@ class TimingStatsStream(F1Stream):
     @classmethod
     def _extract_rows(
         cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
-        rows: list[dict[str, JsonValue]] = []
+    ) -> list[dict[str, ParsedValue]]:
+        rows: list[dict[str, ParsedValue]] = []
 
         for car_number, car_data in cls._iter_lines(data):
             # ── Best speeds ───────────────────────────

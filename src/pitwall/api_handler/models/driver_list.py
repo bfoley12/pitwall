@@ -6,7 +6,7 @@ from pydantic import Field, JsonValue, model_validator
 
 from pitwall.api_handler.registry import register
 
-from .base import F1DataContainer, F1Frame, F1Model, F1Stream
+from .base import F1DataContainer, F1Frame, F1Model, F1Stream, ParsedValue
 
 
 class DriverInfo(F1Model):
@@ -63,7 +63,7 @@ class DriverListStream(F1Stream):
     @classmethod
     def _extract_rows(
         cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
+    ) -> list[dict[str, ParsedValue]]:
         return [
             {
                 "timestamp": timestamp_ms,

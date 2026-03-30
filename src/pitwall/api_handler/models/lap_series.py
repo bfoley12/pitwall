@@ -3,7 +3,7 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import JsonValue, model_validator
 
-from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream
+from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream, ParsedValue
 from pitwall.api_handler.registry import register
 
 
@@ -33,8 +33,8 @@ class LapSeriesStream(F1Stream):
     @classmethod
     def _extract_rows(
         cls, timestamp_ms: int, data: dict[str, JsonValue]
-    ) -> list[dict[str, JsonValue]]:
-        rows: list[dict[str, JsonValue]] = []
+    ) -> list[dict[str, ParsedValue]]:
+        rows: list[dict[str, ParsedValue]] = []
         for racing_number, position in data.items():
             if not isinstance(position, dict):
                 continue

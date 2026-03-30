@@ -11,6 +11,7 @@ from pitwall.api_handler.models.current_tyres import CurrentTyres
 from pitwall.api_handler.models.driver_list import DriverList
 from pitwall.api_handler.models.driver_race_info import DriverRaceInfo
 from pitwall.api_handler.models.driver_tracker import DriverTracker
+from pitwall.api_handler.models.extrapolated_clock import ExtrapolatedClock
 from pitwall.api_handler.models.lap_count import LapCount
 from pitwall.api_handler.models.lap_series import LapSeries
 from pitwall.api_handler.models.pit_lane_time_collection import PitLaneTimeCollection
@@ -395,6 +396,21 @@ def driver_tracker(
 ) -> None:
     df = client.get(
         model=DriverTracker,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
+    )
+    print(df)
+
+
+@app.command()
+def extrapolated_clock(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get(
+        model=ExtrapolatedClock,
         year=year,
         meeting=meeting,
         session=SessionSubType.parse(session),

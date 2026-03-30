@@ -13,7 +13,6 @@ from pydantic import (
 )
 from pydantic.alias_generators import to_pascal
 
-
 ParsedValue = JsonValue | datetime
 
 

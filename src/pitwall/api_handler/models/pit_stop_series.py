@@ -4,7 +4,13 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import Field, JsonValue
 
-from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream, ParsedValue
+from pitwall.api_handler.models.base import (
+    F1DataContainer,
+    F1Frame,
+    F1Model,
+    F1Stream,
+    ParsedValue,
+)
 from pitwall.api_handler.models.pit_stop import PitStopKeyframe
 from pitwall.api_handler.registry import register
 

@@ -3,7 +3,12 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import JsonValue
 
-from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream, ParsedValue
+from pitwall.api_handler.models.base import (
+    F1DataContainer,
+    F1Frame,
+    F1Stream,
+    ParsedValue,
+)
 from pitwall.api_handler.registry import register
 
 # TODO: Decode Keyframe too (not actually informative, but just for completeness)

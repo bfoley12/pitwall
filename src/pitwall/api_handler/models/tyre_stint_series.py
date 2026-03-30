@@ -3,7 +3,13 @@ from typing import ClassVar, override
 import polars as pl
 from pydantic import JsonValue
 
-from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream, ParsedValue
+from pitwall.api_handler.models.base import (
+    F1DataContainer,
+    F1Frame,
+    F1Model,
+    F1Stream,
+    ParsedValue,
+)
 from pitwall.api_handler.models.current_tyres import TyreCompound
 from pitwall.api_handler.registry import register
 

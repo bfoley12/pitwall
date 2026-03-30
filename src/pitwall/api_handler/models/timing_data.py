@@ -7,7 +7,13 @@ import polars as pl
 from pydantic import BeforeValidator, Field, JsonValue
 from pydantic.functional_validators import field_validator
 
-from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Model, F1Stream, ParsedValue
+from pitwall.api_handler.models.base import (
+    F1DataContainer,
+    F1Frame,
+    F1Model,
+    F1Stream,
+    ParsedValue,
+)
 from pitwall.api_handler.registry import register
 
 # TODO: Decode what segment status is: observed values: 0, 2048, 2049, 2050, 2051, 2052, 2064

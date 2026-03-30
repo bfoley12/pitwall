@@ -22,6 +22,7 @@ from pitwall.api_handler.models.race_control_messages import RaceControlMessages
 from pitwall.api_handler.models.season import Season
 from pitwall.api_handler.models.session import SessionIndex, SessionSubType
 from pitwall.api_handler.models.session_info import SessionInfo
+from pitwall.api_handler.models.session_status import SessionStatus
 from pitwall.api_handler.models.timing_app_data import TimingAppData
 from pitwall.api_handler.models.timing_data import TimingDataF1
 from pitwall.api_handler.models.timing_stats import TimingStats
@@ -411,6 +412,21 @@ def extrapolated_clock(
 ) -> None:
     df = client.get(
         model=ExtrapolatedClock,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
+    )
+    print(df)
+
+
+@app.command()
+def session_status(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get(
+        model=SessionStatus,
         year=year,
         meeting=meeting,
         session=SessionSubType.parse(session),

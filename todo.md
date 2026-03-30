@@ -1,4 +1,3 @@
-- ExtrapolatedClock (seems useless)
 - SessionStatus (seems useless)
 - TopThree (redundant position info)
 - Heartbeat (essentially a ping. Only thing to maybe do is translate race time to utc, but that can be done with other info that we have)

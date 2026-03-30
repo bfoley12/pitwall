@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import ClassVar, override
 
 import polars as pl
-from pydantic import JsonValue, field_validator
+from pydantic import JsonValue
 
 from pitwall.api_handler.models.base import (
     F1DataContainer,

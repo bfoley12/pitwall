@@ -26,6 +26,7 @@ from pitwall.api_handler.models.session_status import SessionStatus
 from pitwall.api_handler.models.timing_app_data import TimingAppData
 from pitwall.api_handler.models.timing_data import TimingDataF1
 from pitwall.api_handler.models.timing_stats import TimingStats
+from pitwall.api_handler.models.top_three import TopThree
 from pitwall.api_handler.models.track_status import TrackStatus
 from pitwall.api_handler.models.tyre_stint_series import TyreStintSeries
 from pitwall.api_handler.models.weather_data import WeatherData
@@ -427,6 +428,21 @@ def session_status(
 ) -> None:
     df = client.get(
         model=SessionStatus,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
+    )
+    print(df)
+
+
+@app.command()
+def top_three(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get(
+        model=TopThree,
         year=year,
         meeting=meeting,
         session=SessionSubType.parse(session),

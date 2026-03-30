@@ -1,6 +1,9 @@
 from typing import ClassVar
-from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream
+
 import polars as pl
+
+from pitwall.api_handler.models.base import F1DataContainer, F1Frame, F1Stream
+
 
 class SessionStatusKeyframe(F1Frame):
     status: str

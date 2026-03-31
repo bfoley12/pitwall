@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import ClassVar, override
 
 import polars as pl
@@ -10,21 +10,16 @@ from pitwall.api_handler.models.base import (
     F1Stream,
     ParsedValue,
 )
-from pitwall.api_handler.registry import register
 
 
-class ExtrapolatedClockKeyframe(F1Frame):
+class HeartbeatKeyframe(F1Frame):
     utc: datetime
-    remaining: timedelta
-    extrapolating: bool
 
 
-class ExtrapolatedClockStream(F1Stream):
+class HeartbeatStream(F1Stream):
     SCHEMA: ClassVar[dict[str, pl.DataType]] = {
         "timestamp": pl.Duration("ms"),
-        "utc": pl.Datetime("ms"),
-        "remaining": pl.Duration("ms"),
-        "extrapolating": pl.Boolean(),
+        "utc": pl.Datetime("ns"),
     }
 
     @classmethod
@@ -55,12 +50,9 @@ class ExtrapolatedClockStream(F1Stream):
         ]
 
 
-@register
-class ExtrapolatedClock(
-    F1DataContainer[ExtrapolatedClockKeyframe, ExtrapolatedClockStream]
-):
-    KEYFRAME_FILE: ClassVar[str | None] = "ExtrapolatedClock.json"
-    STREAM_FILE: ClassVar[str | None] = "ExtrapolatedClock.jsonStream"
+class Heartbeat(F1DataContainer[HeartbeatKeyframe, HeartbeatStream]):
+    KEYFRAME_FILE: ClassVar[str | None] = "Heartbeat.json"
+    STREAM_FILE: ClassVar[str | None] = "Heartbeat.jsonStream"
 
-    keyframe: ExtrapolatedClockKeyframe
-    stream: ExtrapolatedClockStream
+    keyframe: HeartbeatKeyframe
+    stream: HeartbeatStream

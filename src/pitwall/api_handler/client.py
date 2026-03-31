@@ -367,7 +367,6 @@ class DirectClient(_BaseClient):
         response = self._client.get(url).raise_for_status()
         return self._decode_response(response, file)
 
-    # Unused but left for convenience of users
     def fetch_one(
         self,
         year: int | None = None,

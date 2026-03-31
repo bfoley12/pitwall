@@ -1,4 +1,3 @@
-- Heartbeat (essentially a ping. Only thing to maybe do is translate race time to utc, but that can be done with other info that we have)
 - TlaRcm (covered in RaceControlMessages)
 - OvertakeSeries (we have this in DriverRaceInfo)
 

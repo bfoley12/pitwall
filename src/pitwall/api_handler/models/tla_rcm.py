@@ -12,14 +12,16 @@ from pitwall.api_handler.models.base import (
 )
 
 
-class HeartbeatKeyframe(F1Frame):
-    utc: datetime
+class TlaRcmKeyframe(F1Frame):
+    timestamp: datetime
+    message: str
 
 
-class HeartbeatStream(F1Stream):
+class TlaRcmStream(F1Stream):
     SCHEMA: ClassVar[dict[str, pl.DataType]] = {
         "timestamp": pl.Duration("ms"),
-        "utc": pl.Datetime("ns"),
+        "utc": pl.Datetime(),
+        "message": pl.String(),
     }
 
     @classmethod
@@ -27,24 +29,21 @@ class HeartbeatStream(F1Stream):
         h, m, sec = s.split(":")
         return int(h) * 3_600_000 + int(m) * 60_000 + int(sec) * 1_000
 
+    # TODO: Unify this and _parse_remaining into F1Stream helper "handle_utc" or something
+    # (we have _parse_utc but not sure it plays well with polars)
     @override
     @classmethod
     def _extract_rows(
         cls, timestamp_ms: int, data: dict[str, JsonValue]
     ) -> list[dict[str, ParsedValue]]:
-        utc_raw = data.get("Utc")
+        utc_raw = data.get("Timestamp")
         utc = cls._parse_utc(cls._as_str(utc_raw)) if isinstance(utc_raw, str) else None
-        return [
-            {
-                "timestamp": timestamp_ms,
-                "utc": utc,
-            }
-        ]
+        return [{"timestamp": timestamp_ms, "utc": utc, "message": data.get("Message")}]
 
 
-class Heartbeat(F1DataContainer[HeartbeatKeyframe, HeartbeatStream]):
-    KEYFRAME_FILE: ClassVar[str | None] = "Heartbeat.json"
-    STREAM_FILE: ClassVar[str | None] = "Heartbeat.jsonStream"
+class TlaRcm(F1DataContainer[TlaRcmKeyframe, TlaRcmStream]):
+    KEYFRAME_FILE: ClassVar[str | None] = "TlaRcm.json"
+    STREAM_FILE: ClassVar[str | None] = "TlaRcm.jsonStream"
 
-    keyframe: HeartbeatKeyframe
-    stream: HeartbeatStream
+    keyframe: TlaRcmKeyframe
+    stream: TlaRcmStream

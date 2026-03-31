@@ -15,6 +15,7 @@ from pitwall.api_handler.models.extrapolated_clock import ExtrapolatedClock
 from pitwall.api_handler.models.heartbeat import Heartbeat
 from pitwall.api_handler.models.lap_count import LapCount
 from pitwall.api_handler.models.lap_series import LapSeries
+from pitwall.api_handler.models.overtake_series import OvertakeSeries
 from pitwall.api_handler.models.pit_lane_time_collection import PitLaneTimeCollection
 from pitwall.api_handler.models.pit_stop import PitStop
 from pitwall.api_handler.models.pit_stop_series import PitStopSeries
@@ -475,6 +476,21 @@ def tla_rcm(
 ) -> None:
     df = client.get(
         model=TlaRcm,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
+    )
+    print(df)
+
+
+@app.command()
+def overtake_series(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get(
+        model=OvertakeSeries,
         year=year,
         meeting=meeting,
         session=SessionSubType.parse(session),

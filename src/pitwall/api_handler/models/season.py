@@ -29,6 +29,7 @@ class SeasonKeyframe(F1Frame):
                 meeting.location,
                 meeting.circuit.short_name,
                 meeting.country.name,
+                meeting.folder_name,
             ]
             if any(q in c.casefold() for c in candidates):
                 matches.append(meeting)

@@ -359,6 +359,7 @@ class DirectClient(_BaseClient):
         file: str = "Index.json",
     ) -> list[dict[str, JsonValue]]:
         if meeting is not None and year is not None:
+            # breakpoint()
             full_meeting = self.get_meeting(year=year, meeting=meeting)
             meeting = full_meeting.folder_name
             if session is not None:

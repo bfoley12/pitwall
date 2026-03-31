@@ -57,7 +57,11 @@ class OvertakeSeriesStream(F1Stream):
             for ot in cls._as_dict(events).values():
                 ot_dict = cls._as_dict(ot)
                 utc_raw = ot_dict.get("Timestamp")
-                utc = cls._parse_utc(cls._as_str(utc_raw)) if isinstance(utc_raw, str) else None
+                utc = (
+                    cls._parse_utc(cls._as_str(utc_raw))
+                    if isinstance(utc_raw, str)
+                    else None
+                )
                 rows.append(
                     {
                         "timestamp": timestamp_ms,

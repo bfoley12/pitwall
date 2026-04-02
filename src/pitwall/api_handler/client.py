@@ -18,7 +18,7 @@ import pitwall.api_handler.registry as registry
 from pitwall.api_handler.models.base import F1KeyframeContainer
 from pitwall.api_handler.models.meeting import Meeting
 from pitwall.api_handler.models.season import Season
-from pitwall.api_handler.models.session import SessionSubType
+from pitwall.api_handler.models.session import Session, SessionSubType
 from pitwall.api_handler.settings import ClientSettings
 
 _SESSION_ALIASES: dict[str, str] = {
@@ -298,47 +298,105 @@ class DirectClient(_BaseClient):
     def get[T: F1KeyframeContainer](
         self,
         model: type[T],
+        *,
+        session: Session,
+    ) -> T: ...
+
+    @overload
+    def get[T: F1KeyframeContainer](
+        self,
+        model: type[T],
+        *,
         year: int,
         meeting: str | None = None,
-        session: str | None = None,
+        session: str | SessionSubType | None = None,
     ) -> T: ...
 
     @overload
     def get(
         self,
         model: str,
+        *,
         year: int,
         meeting: str | None = None,
-        session: str | None = None,
+        session: str | SessionSubType | None = None,
+    ) -> F1KeyframeContainer: ...
+
+    @overload
+    def get(
+        self,
+        model: None = None,
+        *,
+        year: int,
+        meeting: str | None = None,
     ) -> F1KeyframeContainer: ...
 
     def get(
         self,
-        model: str | type[F1KeyframeContainer],
-        year: int,
+        model: str | type[F1KeyframeContainer] | None = None,
+        *,
+        year: int | None = None,
         meeting: str | None = None,
-        session: str | SessionSubType | None = None,
+        session: Session | str | SessionSubType | None = None,
     ) -> F1KeyframeContainer:
+        # --- resolve model ---
+        if model is None:
+            if meeting is None and not isinstance(session, Session):
+                model = SessionSubType.parse("Season")
+            elif session is None:
+                model = SessionSubType.parse("Meeting")
+            else:
+                raise ValueError("model must be specified if session is provided")
+
         resolved = registry.get(model) if isinstance(model, str) else model
-        if isinstance(session, str):
-            session = SessionSubType.parse(session)
+
+        if isinstance(session, Session):
+            # Path parts are already folder names - no further resolution
+            r_year, r_meeting, r_session = session.path_parts()
+        else:
+            if year is None:
+                raise ValueError(
+                    "year is required when session is not a Session object"
+                )
+            r_year = str(year)
+            r_meeting = (
+                self.get_meeting(year=year, meeting=meeting).folder_name if meeting else meeting
+            )
+            if meeting is not None:
+                r_session = (
+                    self._resolve_session_folder(year, meeting, session)
+                    if session
+                    else None
+                )
+            else:
+                r_session = None
 
         raw: dict[str, object] = {}
         if resolved.KEYFRAME_FILE is not None:
             raw["keyframe"] = self.fetch(
-                year=year,
-                meeting=meeting,
-                session=session,
+                year=r_year,
+                meeting=r_meeting,
+                session=r_session,
                 file=resolved.KEYFRAME_FILE,
             )
         if resolved.STREAM_FILE is not None:
             raw["stream"] = self.fetch(
-                year=year,
-                meeting=meeting,
-                session=session,
+                year=r_year,
+                meeting=r_meeting,
+                session=r_session,
                 file=resolved.STREAM_FILE,
             )
         return resolved.model_validate(raw)
+
+    def _resolve_session_folder(
+        self,
+        year: int,
+        meeting: str,
+        session: str | SessionSubType,
+    ) -> str:
+        session = SessionSubType.parse(session)
+        full_meeting = self.get_meeting(year=year, meeting=meeting)
+        return full_meeting.get_session(session.value).folder_name
 
     def get_season(self, year: int) -> Season:
         if year not in self._season_cache:
@@ -353,18 +411,17 @@ class DirectClient(_BaseClient):
     @_retry_policy
     def fetch(
         self,
-        year: int | None = None,
+        year: str | int | None = None,
         meeting: str | None = None,
-        session: SessionSubType | None = None,
+        session: str | None = None,
         file: str = "Index.json",
     ) -> list[dict[str, JsonValue]]:
-        if meeting is not None and year is not None:
-            # breakpoint()
-            full_meeting = self.get_meeting(year=year, meeting=meeting)
-            meeting = full_meeting.folder_name
-            if session is not None:
-                session = full_meeting.get_session(session.value).folder_name  # pyright: ignore[reportAssignmentType]
-        url = self._build_url(year=year, meeting=meeting, session=session, file=file)
+        url = self._build_url(
+            year=None if year is None else int(year),
+            meeting=meeting,
+            session=session,
+            file=file,
+        )
         response = self._client.get(url).raise_for_status()
         return self._decode_response(response, file)
 

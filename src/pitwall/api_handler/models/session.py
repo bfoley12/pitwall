@@ -105,13 +105,18 @@ class Session(F1Model):
             raise ValueError("Session has no path")
         return self.path.split("/")[2]
 
+    def path_parts(self) -> tuple[str, str, str]:
+        if self.path is None:
+            return ("", "", "")
+        parts = self.path.split("/")
+        return (parts[0], parts[1], parts[2])
+
     def match(self, query: str) -> bool:
         return (
             query.casefold() in self.sub_type.casefold()
             if self.sub_type is not None
             else False
         )
-
 
 class FeedName(StrEnum):
     SESSION_INFO = "SessionInfo"

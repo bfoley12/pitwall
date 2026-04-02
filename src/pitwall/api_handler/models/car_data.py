@@ -1,11 +1,13 @@
+from datetime import datetime
 from typing import ClassVar, override
 
 import polars as pl
-from pydantic import JsonValue
+from pydantic import Field, JsonValue
 
 from pitwall.api_handler.models.base import (
     F1DataContainer,
     F1Frame,
+    F1Model,
     F1Stream,
     ParsedValue,
 )
@@ -17,15 +19,43 @@ from pitwall.api_handler.registry import register
 CHANNEL_MAP: dict[str, str] = {
     "0": "rpm",
     "2": "speed",
-    "3": "rpm",
+    "3": "gear",
     "4": "throttle",
     "5": "brake",
     "45": "drs",
 }
 
+class CarDataChannels(F1Model):
+    rpm: int = Field(0, alias="0")
+    speed: int = Field(0, alias="2")
+    gear: int = Field(0, alias="3")
+    throttle: int = Field(0, alias="4")
+    brake: int = Field(0, alias="5")
+    drs: int | None = Field(None, alias="45")
 
-class CarDataFrame(F1Frame):
-    pass
+
+class CarDataEntry(F1Model):
+    channels: CarDataChannels
+
+
+class CarDataSnapshot(F1Model):
+    utc: str
+    cars: dict[str, CarDataEntry]
+
+
+class CarDataKeyframe(F1Frame):
+    entries: list[CarDataSnapshot]
+
+    def to_rows(self) -> list[dict[str, object]]:
+        return [
+            {
+                "utc": snapshot.utc,
+                "car_number": car_num,
+                **snapshot.cars[car_num].channels.model_dump(),
+            }
+            for snapshot in self.entries
+            for car_num in snapshot.cars
+        ]
 
 
 class CarDataStream(F1Stream):
@@ -75,7 +105,9 @@ class CarDataStream(F1Stream):
 
 
 @register
-class CarData(F1DataContainer[CarDataFrame, CarDataStream]):
+class CarData(F1DataContainer[CarDataKeyframe, CarDataStream]):
+    KEYFRAME_FILE: ClassVar[str | None] = "CarData.z.json"
     STREAM_FILE: ClassVar[str | None] = "CarData.z.jsonStream"
 
+    keyframe: CarDataKeyframe
     stream: CarDataStream

@@ -12,13 +12,20 @@ Users may get data in a two ways:
     - methods such as get_overtakes, get_stints, etc.
     - transforms and formats the raw data according to the method and intended use
 
-## Data Description
-- ArchiveStatus
-  - Keyframe: signal for whether the archiving is complete
-  - Stream: status of the archiving process
-- CarData
-  - Keyframe: 
-  - Stream: 
-## Usage
-### DirectClient/AsyncDirectClient
-temp text
+## Getting Started
+
+```
+from pitwall import DirectClient
+
+client = DirectClient()
+
+# Request CarData and Position from livetiming API
+car_data = client.get(model="CarData", year=2026, meeting="Shanghai", session="Race")
+position_data = client.get(model="Position", year=2026, meeting="Shanghai", session="Race")
+
+car_df = car_data.df
+position_df = car_data.df
+
+joined_df = car_df.join_asof()
+
+```

@@ -169,5 +169,9 @@ class F1DataContainer(
 
     stream: F1StreamT_co
 
+    @property
+    def df(self) -> pl.DataFrame:
+        return self.stream.data
+
 
 F1ModelT = TypeVar("F1ModelT", bound=F1Model)

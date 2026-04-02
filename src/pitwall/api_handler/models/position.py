@@ -20,7 +20,7 @@ class PositionKeyframe(F1Frame):
 class PositionStream(F1Stream):
     SCHEMA: ClassVar[dict[str, pl.DataType]] = {
         "timestamp": pl.Duration("ms"),
-        "utc": pl.Datetime(),
+        "utc": pl.String(),
         "racing_number": pl.UInt8(),
         "status": pl.String(),
         # TODO: Determine best representation. Float64 is surely too large
@@ -59,6 +59,8 @@ class PositionStream(F1Stream):
 
 @register
 class Position(F1DataContainer[PositionKeyframe, PositionStream]):
+    KEYFRAME_FILE: ClassVar[str | None] = "Position.z.json"
     STREAM_FILE: ClassVar[str | None] = "Position.z.jsonStream"
 
+    keyframe: PositionKeyframe
     stream: PositionStream

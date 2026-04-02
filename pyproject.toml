@@ -8,6 +8,8 @@ dependencies = [
     "asyncio>=4.0.0",
     "fastf1>=3.8.1",
     "httpx>=0.28.1",
+    "marimo>=0.22.0",
+    "plotly>=6.6.0",
     "polars>=1.39.0",
     "pydantic>=2.12.5",
     "pydantic-settings>=2.13.1",
@@ -79,3 +81,6 @@ venvPath = "."
 venv = ".venv"
 pythonVersion = "3.14"
 extraPaths = ["src"]
+
+[tool.marimo.runtime]
+output_max_bytes = 10_000_000

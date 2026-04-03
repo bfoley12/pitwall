@@ -36,6 +36,7 @@ _SESSION_ALIASES: dict[str, str] = {
     "day 1": "practice 1",
     "day 2": "practice 2",
     "day 3": "practice 3",
+    "practice": "practice 1",
 }
 
 
@@ -47,6 +48,7 @@ class SessionSubType(StrEnum):
     SPRINT_SHOOTOUT = "Sprint Shootout"
     SPRINT = "Sprint"
     RACE = "Race"
+    HIGH_SPEED_TRACK_TEST = "High Speed Track Test"
 
     RACE_ONLY: ClassVar[frozenset[SessionSubType]]
 
@@ -86,8 +88,8 @@ class Session(F1Model):
     number: int | None = None
     sub_type: SessionSubTypeField | None = Field(alias="Name", default=None)
     start_date: datetime
-    end_date: datetime
     gmt_offset: timedelta
+    end_date: datetime | None = None
     path: str | None = None
 
     @field_validator("gmt_offset", mode="before")

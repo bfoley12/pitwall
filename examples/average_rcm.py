@@ -55,8 +55,36 @@ def _(client):
 
 
 @app.cell
-def _(client):
-    print(client.get_models(True))
+async def _():
+    import asyncio
+    from pitwall import AsyncDirectClient
+
+    # Use the async client as a context manager
+    async with AsyncDirectClient() as async_client:
+        # Launch multiple jobs at the same time (this sends 4 requests - 1 for keyframe and 1 for stream in each client.get)
+        car_data, position = await asyncio.gather(
+                async_client.get("CarData", year=2024, meeting="Monza", session="Race"),
+                async_client.get("Position", year=2024, meeting="Monza", session="Race"),
+            )
+    car_df = car_data.df
+    position_df = car_data.df
+
+    joined_df = car_df.join_asof(
+        position_df, on="timestamp", by="racing_number", strategy="nearest"
+    )
+    return (AsyncDirectClient,)
+
+
+@app.cell
+async def _(AsyncDirectClient):
+    from pprint import pprint
+    async with AsyncDirectClient() as _client:
+        pprint(await _client.get_available_seasons())
+    return
+
+
+@app.cell
+def _():
     return
 
 

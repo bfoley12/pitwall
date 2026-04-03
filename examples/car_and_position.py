@@ -25,7 +25,7 @@ def _(client, pl):
     car_data = client.get(
         model="CarData", year=2026, meeting="Australia", session="Race"
     )
-    car_df = car_data.stream.data
+    car_df = car_data.df
     car_df = car_df.with_columns(
         pl.col("timestamp").dt.total_seconds().alias("timestamp_s")
     )

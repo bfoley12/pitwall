@@ -48,20 +48,17 @@ class TestFetch:
         self,
         async_client: AsyncDirectClient,
         httpx_mock: HTTPXMock,
-        season_index: str,
         timing_data_keyframe: str,
     ) -> None:
-        httpx_mock.add_response(text=season_index)
         httpx_mock.add_response(text=timing_data_keyframe)
 
-        await async_client.fetch(
+        _ = await async_client.fetch(
             year=2023, meeting="Pre-Season", file="TimingData.jsonStream"
         )
 
         requests = httpx_mock.get_requests()
-        assert len(requests) == 2
-        assert "Index.json" in str(requests[0].url)
-        assert "TimingData.jsonStream" in str(requests[1].url)
+        assert len(requests) == 1
+        assert "TimingData.jsonStream" in str(requests[0].url)
 
     # ── Error paths ───────────────────────────────────────────────
 
@@ -72,7 +69,7 @@ class TestFetch:
     ) -> None:
         httpx_mock.add_response(status_code=404)
         with pytest.raises(httpx.HTTPStatusError) as exc_info:
-            await async_client.fetch(year=2023, file="NonExistent.json")
+            _ = await async_client.fetch(year=2023, file="NonExistent.json")
         assert exc_info.value.response.status_code == 404
 
     async def test_invalid_year_raises_without_http(
@@ -81,7 +78,7 @@ class TestFetch:
         httpx_mock: HTTPXMock,
     ) -> None:
         with pytest.raises(ValueError):
-            await async_client.fetch(year=2010)
+            _ = await async_client.fetch(year=2010)
         assert len(httpx_mock.get_requests()) == 0
 
     # ── Retry behavior ────────────────────────────────────────────
@@ -106,7 +103,7 @@ class TestFetch:
     ) -> None:
         httpx_mock.add_response(status_code=404)
         with pytest.raises(httpx.HTTPStatusError):
-            await async_client.fetch(year=2023)
+            _ = await async_client.fetch(year=2023)
         assert len(httpx_mock.get_requests()) == 1
 
     async def test_raises_after_max_retries(
@@ -116,7 +113,7 @@ class TestFetch:
     ) -> None:
         httpx_mock.add_response(status_code=500, is_reusable=True)
         with pytest.raises(httpx.HTTPStatusError):
-            await async_client.fetch(year=2023)
+            _ = await async_client.fetch(year=2023)
         assert len(httpx_mock.get_requests()) == 3
 
     async def test_retries_on_timeout(
@@ -156,6 +153,7 @@ class TestGetSeason:
     ) -> None:
         httpx_mock.add_response(text=season_index)
         season = await async_client.get_season(year=2023)
+        assert season is not None
         assert season.keyframe.year == 2023
 
     async def test_caches_after_first_call(
@@ -165,8 +163,8 @@ class TestGetSeason:
         season_index: str,
     ) -> None:
         httpx_mock.add_response(text=season_index)
-        await async_client.get_season(year=2023)
-        await async_client.get_season(year=2023)
+        _ = await async_client.get_season(year=2023)
+        _ = await async_client.get_season(year=2023)
         assert len(httpx_mock.get_requests()) == 1
 
     async def test_clear_cache_forces_refetch(
@@ -176,9 +174,9 @@ class TestGetSeason:
         season_index: str,
     ) -> None:
         httpx_mock.add_response(text=season_index, is_reusable=True)
-        await async_client.get_season(year=2023)
+        _ = await async_client.get_season(year=2023)
         async_client.clear_cache()
-        await async_client.get_season(year=2023)
+        _ = await async_client.get_season(year=2023)
         assert len(httpx_mock.get_requests()) == 2
 
 
@@ -201,7 +199,7 @@ class TestGetMeeting:
     ) -> None:
         httpx_mock.add_response(text=season_index)
         with pytest.raises(ValueError, match=r"[Nn]o meeting"):
-            await async_client.get_meeting(year=2023, meeting="Nonexistent")
+            _ = await async_client.get_meeting(year=2023, meeting="Nonexistent")
 
 
 class TestGet:
@@ -252,7 +250,7 @@ class TestGet:
         )
 
         with pytest.raises((httpx.HTTPStatusError, ExceptionGroup)):
-            await async_client.fetch(year=2023, file="NonExistent.json")
+            _ = await async_client.fetch(year=2023, file="NonExistent.json")
 
 
 class TestContextManager:
@@ -262,5 +260,5 @@ class TestContextManager:
 
     async def test_default_settings(self) -> None:
         client = AsyncDirectClient()
-        assert client._settings is not None
-        await client._client.aclose()
+        assert client._settings is not None # pyright: ignore[reportPrivateUsage]
+        await client._client.aclose() # pyright: ignore[reportPrivateUsage]

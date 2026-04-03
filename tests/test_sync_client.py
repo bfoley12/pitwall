@@ -165,6 +165,7 @@ class TestGetSeason:
     ) -> None:
         httpx_mock.add_response(text=season_index)
         season = sync_client.get_season(year=2023)
+        assert season is not None
         assert season.keyframe.year == 2023
 
     def test_caches_after_first_call(

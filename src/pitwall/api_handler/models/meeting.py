@@ -112,7 +112,10 @@ class Meeting(F1Model):
 
     @property
     def weekend_end_datetime(self) -> datetime:
-        return self.sessions[-1].end_date
+        value = self.sessions[-1].end_date
+        if value is None:
+            return self.sessions[-1].start_date
+        return value
 
     @property
     def folder_name(self) -> str:

@@ -180,6 +180,22 @@ class _BaseClient:
         else:
             result = model_list
         return result
+    @staticmethod
+    def _resolve_model(
+        model: str | type[F1KeyframeContainer] | None,
+        meeting: str | None,
+        session: Session | str | SessionSubType | None,
+    ) -> type[F1KeyframeContainer]:
+        if model is None:
+            if meeting is None and session is None:
+                return Season
+            elif meeting is None and isinstance(session, (str, SessionSubType)):
+                raise ValueError("meeting must be specified if session is of type 'str' or 'SessionSubType'")
+            else:
+                raise ValueError("model must be specified if session is provided")
+        if isinstance(model, str):
+            return registry.get(model)
+        return model
 
 
 class AsyncDirectClient(_BaseClient):
@@ -203,78 +219,159 @@ class AsyncDirectClient(_BaseClient):
     async def get[T: F1KeyframeContainer](
         self,
         model: type[T],
+        *,
+        session: Session,
+        stream_only: bool = False,
+    ) -> T: ...
+
+    @overload
+    async def get[T: F1KeyframeContainer](
+        self,
+        model: type[T],
+        *,
         year: int,
         meeting: str | None = None,
-        session: str | None = None,
+        session: str | SessionSubType | None = None,
+        stream_only: bool = False,
     ) -> T: ...
 
     @overload
     async def get(
         self,
         model: str,
+        *,
         year: int,
         meeting: str | None = None,
-        session: str | None = None,
+        session: str | SessionSubType | None = None,
+        stream_only: bool = False,
+    ) -> F1KeyframeContainer: ...
+
+    @overload
+    async def get(
+        self,
+        model: None = None,
+        *,
+        year: int,
+        meeting: str | None = None,
     ) -> F1KeyframeContainer: ...
 
     async def get(
         self,
-        model: str | type[F1KeyframeContainer],
-        year: int,
+        model: str | type[F1KeyframeContainer] | None = None,
+        *,
+        year: int | None = None,
         meeting: str | None = None,
-        session: str | None = None,
+        session: Session | str | SessionSubType | None = None,
+        stream_only: bool = False,
     ) -> F1KeyframeContainer:
-        resolved = registry.get(model) if isinstance(model, str) else model
+        resolved = self._resolve_model(model, meeting, session)
+
+        if isinstance(session, Session):
+            r_year, r_meeting, r_session = session.path_parts()
+        else:
+            if year is None:
+                raise ValueError(
+                    "year is required when session is not a Session object"
+                )
+            r_year = str(year)
+            r_meeting = (
+                (await self.get_meeting(year=year, meeting=meeting)).folder_name
+                if meeting
+                else meeting
+            )
+            if meeting is not None:
+                r_session = (
+                    await self._resolve_session_folder(year, meeting, session)
+                    if session
+                    else None
+                )
+            else:
+                r_session = None
 
         tasks: dict[str, asyncio.Task[list[dict[str, JsonValue]]]] = {}
         async with asyncio.timeout(self._settings.request_timeout):
             async with asyncio.TaskGroup() as tg:
-                if resolved.KEYFRAME_FILE is not None:
+                if resolved.KEYFRAME_FILE is not None and not stream_only:
                     tasks["keyframe"] = tg.create_task(
                         self.fetch(
-                            year=year,
-                            meeting=meeting,
-                            session=session,
+                            year=r_year,
+                            meeting=r_meeting,
+                            session=r_session,
                             file=resolved.KEYFRAME_FILE,
                         )
                     )
                 if resolved.STREAM_FILE is not None:
                     tasks["stream"] = tg.create_task(
                         self.fetch(
-                            year=year,
-                            meeting=meeting,
-                            session=session,
+                            year=r_year,
+                            meeting=r_meeting,
+                            session=r_session,
                             file=resolved.STREAM_FILE,
                         )
                     )
         raw = {k: t.result() for k, t in tasks.items()}
         return resolved.model_validate(raw)
 
-    async def get_season(self, year: int) -> Season:
+    async def _resolve_session_folder(
+        self,
+        year: int,
+        meeting: str,
+        session: str | SessionSubType,
+    ) -> str:
+        session = SessionSubType.parse(session)
+        full_meeting = await self.get_meeting(year=year, meeting=meeting)
+        return full_meeting.get_session(session.value).folder_name
+
+    async def get_season(self, year: int) -> Season | None:
         if year not in self._season_cache:
-            data = await self.fetch_one(year=year)
-            self._season_cache[year] = Season.model_validate(data)
+            try:
+                data = await self.fetch_one(year=year)
+                self._season_cache[year] = Season.model_validate(data)
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code in (403, 404):
+                    return None
+                else:
+                    raise
         return self._season_cache[year]
+
+    async def get_available_seasons(self) -> dict[int, Season]:
+        years = range(2018, date.today().year + 1)
+        tasks: dict[int, asyncio.Task[Season | None]] = {}
+
+        async with asyncio.timeout(self._settings.request_timeout):
+            async with asyncio.TaskGroup() as tg:
+                for year in years:
+                    tasks[year] = tg.create_task(self.get_season(year))
+
+        return {
+            year: season
+            for year, task in tasks.items()
+            if (season := task.result()) is not None
+        }
 
     async def get_meeting(self, year: int, meeting: str) -> Meeting:
         season = await self.get_season(year)
+        if season is None:
+            raise ValueError(f"Invalid year provided: {year}")
         return season.keyframe.get_meeting(meeting)
 
     @_retry_policy
     async def fetch(
         self,
-        year: int | None = None,
+        year: str | int | None = None,
         meeting: str | None = None,
         session: str | None = None,
         file: str = "Index.json",
     ) -> list[dict[str, JsonValue]]:
-        if meeting is not None and year is not None:
-            meeting = (await self.get_meeting(year=year, meeting=meeting)).folder_name
-        url = self._build_url(year=year, meeting=meeting, session=session, file=file)
+        url = self._build_url(
+            year=None if year is None else int(year),
+            meeting=meeting,
+            session=session,
+            file=file,
+        )
         response = (await self._client.get(url)).raise_for_status()
         return self._decode_response(response, file)
 
-    # Unused but left for convenience of users
     async def fetch_one(
         self,
         year: int | None = None,
@@ -353,19 +450,9 @@ class DirectClient(_BaseClient):
         session: Session | str | SessionSubType | None = None,
         stream_only: bool = False,
     ) -> F1KeyframeContainer:
-        # --- resolve model ---
-        if model is None:
-            if meeting is None and not isinstance(session, Session):
-                model = SessionSubType.parse("Season")
-            elif session is None:
-                model = SessionSubType.parse("Meeting")
-            else:
-                raise ValueError("model must be specified if session is provided")
-
-        resolved = registry.get(model) if isinstance(model, str) else model
+        resolved = self._resolve_model(model, meeting, session)
 
         if isinstance(session, Session):
-            # Path parts are already folder names - no further resolution
             r_year, r_meeting, r_session = session.path_parts()
         else:
             if year is None:
@@ -414,14 +501,28 @@ class DirectClient(_BaseClient):
         full_meeting = self.get_meeting(year=year, meeting=meeting)
         return full_meeting.get_session(session.value).folder_name
 
-    def get_season(self, year: int) -> Season:
+    def get_season(self, year: int) -> Season | None:
         if year not in self._season_cache:
-            data = self.fetch_one(year=year)
-            self._season_cache[year] = Season.model_validate(data)
+            try:
+                data = self.fetch_one(year=year)
+                self._season_cache[year] = Season.model_validate(data)
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code in (403, 404):
+                    return None
+                raise
         return self._season_cache[year]
+
+    def get_available_seasons(self) -> dict[int, Season]:
+        return {
+            year: season
+            for year in range(2018, date.today().year + 1)
+            if (season := self.get_season(year)) is not None
+        }
 
     def get_meeting(self, year: int, meeting: str) -> Meeting:
         season = self.get_season(year)
+        if season is None:
+            raise ValueError(f"Invalid year provided: {year}")
         return season.keyframe.get_meeting(meeting)
 
     @_retry_policy

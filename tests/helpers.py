@@ -10,10 +10,10 @@ import httpx
 import pytest
 
 from pitwall.api_handler.client import (
-    _BaseClient,
-    _decompress,
-    _is_retryable,
-    _validate_year,
+    _BaseClient,  # pyright: ignore[reportPrivateUsage]
+    _decompress,  # pyright: ignore[reportPrivateUsage]
+    _is_retryable,  # pyright: ignore[reportPrivateUsage]
+    _validate_year,  # pyright: ignore[reportPrivateUsage]
 )
 from pitwall.api_handler.settings import ClientSettings
 

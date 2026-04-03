@@ -27,19 +27,19 @@ def _(client):
 
 
 @app.cell
-def _(season) -> None:
+def _(season):
     season.keyframe.meetings[0].sessions[0]
     return
 
 
 @app.cell
-def _(client) -> None:
+def _(client):
     client.get(year=2026, model="Season").keyframe.meetings
     return
 
 
 @app.cell
-def _(client, season) -> None:
+def _(client, season):
     data_list = []
     for meeting in season.keyframe.meetings:
         for session in meeting.sessions:
@@ -49,8 +49,14 @@ def _(client, season) -> None:
 
 
 @app.cell
-def _(client) -> None:
+def _(client):
     client.get(year=2026, meeting="Shanghai", session="Race", model="TlaRcm")
+    return
+
+
+@app.cell
+def _(client):
+    print(client.get_models(True))
     return
 
 

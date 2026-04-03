@@ -171,6 +171,16 @@ class _BaseClient:
 
         return entries
 
+    def get_models(self, explain: bool = False) -> list[str] | str:
+        model_list = registry.get_names()
+        result = ""
+        if explain:
+            for model in model_list:
+                result += f"{model}: {registry.get(model).explain()}\n"
+        else:
+            result = model_list
+        return result
+
 
 class AsyncDirectClient(_BaseClient):
     def __init__(self, *, settings: ClientSettings | None = None) -> None:

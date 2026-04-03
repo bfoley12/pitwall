@@ -8,7 +8,11 @@ def register[T: F1KeyframeContainer](cls: type[T]) -> type[T]:
     return cls
 
 
-def get(name: str) -> type[F1KeyframeContainer]:
+def get_names() -> list[str]:
+    return list(_REGISTRY)
+
+
+def get(name: str | None) -> type[F1KeyframeContainer]:
     if name not in _REGISTRY:
         raise KeyError(
             f"No container registered as {name!r}. Available: {list(_REGISTRY)}"

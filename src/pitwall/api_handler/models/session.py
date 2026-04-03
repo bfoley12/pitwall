@@ -118,6 +118,7 @@ class Session(F1Model):
             else False
         )
 
+
 class FeedName(StrEnum):
     SESSION_INFO = "SessionInfo"
     ARCHIVE_STATUS = "ArchiveStatus"

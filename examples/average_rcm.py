@@ -6,9 +6,10 @@ app = marimo.App(width="full")
 
 @app.cell
 def _():
-    from pitwall import DirectClient
-    import polars as pl
     import plotly.express as px
+    import polars as pl
+
+    from pitwall import DirectClient
 
     return (DirectClient,)
 
@@ -26,19 +27,19 @@ def _(client):
 
 
 @app.cell
-def _(season):
+def _(season) -> None:
     season.keyframe.meetings[0].sessions[0]
     return
 
 
 @app.cell
-def _(client):
+def _(client) -> None:
     client.get(year=2026, model="Season").keyframe.meetings
     return
 
 
 @app.cell
-def _(client, season):
+def _(client, season) -> None:
     data_list = []
     for meeting in season.keyframe.meetings:
         for session in meeting.sessions:
@@ -48,7 +49,7 @@ def _(client, season):
 
 
 @app.cell
-def _(client):
+def _(client) -> None:
     client.get(year=2026, meeting="Shanghai", session="Race", model="TlaRcm")
     return
 

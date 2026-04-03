@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import ClassVar, override
 
 import polars as pl
@@ -24,6 +23,7 @@ CHANNEL_MAP: dict[str, str] = {
     "5": "brake",
     "45": "drs",
 }
+
 
 class CarDataChannels(F1Model):
     rpm: int = Field(0, alias="0")

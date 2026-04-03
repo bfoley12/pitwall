@@ -364,7 +364,9 @@ class DirectClient(_BaseClient):
                 )
             r_year = str(year)
             r_meeting = (
-                self.get_meeting(year=year, meeting=meeting).folder_name if meeting else meeting
+                self.get_meeting(year=year, meeting=meeting).folder_name
+                if meeting
+                else meeting
             )
             if meeting is not None:
                 r_session = (

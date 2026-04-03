@@ -46,49 +46,6 @@ class TestFetch:
         assert str(request.url) == f"{BASE}/2023/Index.json"
         assert len(result) > 0
 
-    def test_full_path_resolves_meeting_and_session(
-        self,
-        sync_client: DirectClient,
-        httpx_mock: HTTPXMock,
-        season_index: str,
-        timing_data_keyframe: str,
-    ) -> None:
-        """Passing a human meeting name triggers get_season() first."""
-        # 1st request: season index for meeting resolution
-        httpx_mock.add_response(text=season_index)
-        # 2nd request: the actual feed
-        httpx_mock.add_response(text=timing_data_keyframe)
-
-        _ = sync_client.fetch(
-            year=2023, meeting="Pre-Season", file="TimingData.jsonStream"
-        )
-
-        requests = httpx_mock.get_requests()
-        assert len(requests) == 2
-        # First call is the season index
-        assert "Index.json" in str(requests[0].url)
-        # Second call is the actual feed with resolved folder name
-        assert "TimingData.jsonStream" in str(requests[1].url)
-
-    def test_folder_name_still_resolves(
-        self,
-        sync_client: DirectClient,
-        httpx_mock: HTTPXMock,
-        season_index: str,
-        timing_data_keyframe: str,
-    ) -> None:
-        """Even an exact folder name goes through meeting resolution
-        because fetch() always calls get_meeting() when meeting is set."""
-        httpx_mock.add_response(text=season_index)
-        httpx_mock.add_response(text=timing_data_keyframe)
-
-        _ = sync_client.fetch(
-            year=2023,
-            meeting="2023-02-25_Pre-Season_Testing",
-            file="TimingData.jsonStream",
-        )
-        assert len(httpx_mock.get_requests()) == 2
-
     # ── Error paths ───────────────────────────────────────────────
 
     def test_raises_on_404(

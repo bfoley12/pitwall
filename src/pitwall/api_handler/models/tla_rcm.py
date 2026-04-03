@@ -10,6 +10,7 @@ from pitwall.api_handler.models.base import (
     F1Stream,
     ParsedValue,
 )
+from pitwall.api_handler.registry import register
 
 
 class TlaRcmKeyframe(F1Frame):
@@ -41,6 +42,7 @@ class TlaRcmStream(F1Stream):
         return [{"timestamp": timestamp_ms, "utc": utc, "message": data.get("Message")}]
 
 
+@register
 class TlaRcm(F1DataContainer[TlaRcmKeyframe, TlaRcmStream]):
     KEYFRAME_FILE: ClassVar[str | None] = "TlaRcm.json"
     STREAM_FILE: ClassVar[str | None] = "TlaRcm.jsonStream"

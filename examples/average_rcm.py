@@ -44,12 +44,12 @@ def _(client, season):
         for session in meeting.sessions:
             print(session)
             data_list.append(client.get(session=session, model="RaceControlMessages"))
-    return (data_list,)
+    return
 
 
 @app.cell
-def _(data_list):
-    data_list
+def _(client):
+    client.get(year=2026, meeting="Shanghai", session="Race", model="TlaRcm")
     return
 
 

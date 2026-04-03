@@ -12,6 +12,7 @@ from pitwall.api_handler.models.driver_tracker import (
     DriverTrackerData,
     DriverTrackerStream,
 )
+from pitwall.api_handler.registry import register
 
 
 class TopThreeInfo(DriverTrackerData):
@@ -71,6 +72,7 @@ class TopThreeStream(DriverTrackerStream):
         return rows
 
 
+@register
 class TopThree(F1DataContainer[TopThreeKeyframe, TopThreeStream]):
     KEYFRAME_FILE: ClassVar[str | None] = "TopThree.json"
     STREAM_FILE: ClassVar[str | None] = "TopThree.jsonStream"

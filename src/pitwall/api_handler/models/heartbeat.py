@@ -10,6 +10,7 @@ from pitwall.api_handler.models.base import (
     F1Stream,
     ParsedValue,
 )
+from pitwall.api_handler.registry import register
 
 
 class HeartbeatKeyframe(F1Frame):
@@ -42,6 +43,7 @@ class HeartbeatStream(F1Stream):
         ]
 
 
+@register
 class Heartbeat(F1DataContainer[HeartbeatKeyframe, HeartbeatStream]):
     KEYFRAME_FILE: ClassVar[str | None] = "Heartbeat.json"
     STREAM_FILE: ClassVar[str | None] = "Heartbeat.jsonStream"

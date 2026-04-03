@@ -11,6 +11,7 @@ from pitwall.api_handler.models.base import (
     F1Stream,
     ParsedValue,
 )
+from pitwall.api_handler.registry import register
 
 
 class Overtake(F1Model):
@@ -73,6 +74,7 @@ class OvertakeSeriesStream(F1Stream):
         return rows
 
 
+@register
 class OvertakeSeries(F1DataContainer[OvertakeSeriesKeyframe, OvertakeSeriesStream]):
     KEYFRAME_FILE: ClassVar[str | None] = "OvertakeSeries.json"
     STREAM_FILE: ClassVar[str | None] = "OvertakeSeries.jsonStream"

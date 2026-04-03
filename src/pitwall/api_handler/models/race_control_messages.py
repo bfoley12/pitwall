@@ -3,7 +3,14 @@ from enum import StrEnum
 from typing import Annotated, ClassVar, Literal, override
 
 import polars as pl
-from pydantic import BeforeValidator, Discriminator, Field, JsonValue, Tag, model_validator
+from pydantic import (
+    BeforeValidator,
+    Discriminator,
+    Field,
+    JsonValue,
+    Tag,
+    model_validator,
+)
 
 from pitwall.api_handler.registry import register
 
@@ -73,6 +80,7 @@ class RaceControlBase(F1Model):
 
 
 ParsedSafetyCarMode = Annotated[SafetyCarMode, BeforeValidator(SafetyCarMode.parse)]
+
 
 class SafetyCarMessage(RaceControlBase):
     category: Literal["SafetyCar"]

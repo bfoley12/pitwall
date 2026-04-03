@@ -300,6 +300,7 @@ class DirectClient(_BaseClient):
         model: type[T],
         *,
         session: Session,
+        stream_only: bool = False,
     ) -> T: ...
 
     @overload
@@ -310,6 +311,7 @@ class DirectClient(_BaseClient):
         year: int,
         meeting: str | None = None,
         session: str | SessionSubType | None = None,
+        stream_only: bool = False,
     ) -> T: ...
 
     @overload
@@ -320,6 +322,7 @@ class DirectClient(_BaseClient):
         year: int,
         meeting: str | None = None,
         session: str | SessionSubType | None = None,
+        stream_only: bool = False,
     ) -> F1KeyframeContainer: ...
 
     @overload
@@ -338,6 +341,7 @@ class DirectClient(_BaseClient):
         year: int | None = None,
         meeting: str | None = None,
         session: Session | str | SessionSubType | None = None,
+        stream_only: bool = False,
     ) -> F1KeyframeContainer:
         # --- resolve model ---
         if model is None:
@@ -372,7 +376,7 @@ class DirectClient(_BaseClient):
                 r_session = None
 
         raw: dict[str, object] = {}
-        if resolved.KEYFRAME_FILE is not None:
+        if resolved.KEYFRAME_FILE is not None and not stream_only:
             raw["keyframe"] = self.fetch(
                 year=r_year,
                 meeting=r_meeting,

@@ -124,11 +124,11 @@ class Meeting(F1Model):
             raise ValueError("No sessions available")
         return path.split("/")[1]
 
-    def get_session(self, session_name: str) -> Session:
+    def get_session(self, name: str) -> Session:
         for session in self.sessions:
-            if session.match(session_name):
+            if session.match(name):
                 return session
-        raise ValueError(f"No session found from {self.sessions} for {session_name}")
+        raise ValueError(f"No session found from {self.sessions} for {name}")
 
     @override
     def __str__(self) -> str:

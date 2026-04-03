@@ -18,7 +18,7 @@ import pitwall.api_handler.registry as registry
 from pitwall.api_handler.models.base import F1KeyframeContainer
 from pitwall.api_handler.models.meeting import Meeting
 from pitwall.api_handler.models.season import Season
-from pitwall.api_handler.models.session import Session, SessionSubType
+from pitwall.api_handler.models.session import Session, SessionIndex, SessionSubType
 from pitwall.api_handler.settings import ClientSettings
 
 _SESSION_ALIASES: dict[str, str] = {
@@ -180,6 +180,7 @@ class _BaseClient:
         else:
             result = model_list
         return result
+
     @staticmethod
     def _resolve_model(
         model: str | type[F1KeyframeContainer] | None,
@@ -187,10 +188,14 @@ class _BaseClient:
         session: Session | str | SessionSubType | None,
     ) -> type[F1KeyframeContainer]:
         if model is None:
+            if meeting is not None and session is not None:
+                return SessionIndex
             if meeting is None and session is None:
                 return Season
             elif meeting is None and isinstance(session, (str, SessionSubType)):
-                raise ValueError("meeting must be specified if session is of type 'str' or 'SessionSubType'")
+                raise ValueError(
+                    "meeting must be specified if session is of type 'str' or 'SessionSubType'"
+                )
             else:
                 raise ValueError("model must be specified if session is provided")
         if isinstance(model, str):

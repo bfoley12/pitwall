@@ -75,3 +75,7 @@ class Season(F1KeyframeContainer[SeasonKeyframe]):
         if "keyframe" not in raw:
             return {"keyframe": raw}
         return raw
+
+    @property
+    def meetings(self) -> list[Meeting]:
+        return self.keyframe.meetings

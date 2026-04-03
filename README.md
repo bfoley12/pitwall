@@ -27,13 +27,33 @@ uv add pitwall
 pip install pitwall
 ```
 
-## Discovery
+### Discovery
 ```python
 from pitwall import DirectClient
 
 with DirectClient() as client:
     # Available years
-    client.get()
+    client.get_available_years()
+    
+    # Get meetings from specific year
+    season = client.get(model="Season", year=2026) # Using unified client.get
+    season = client.get_season(year=2026) # Using convenience method
+    season.keyframe.meetings
+    season.meetings # Aliases season.keyframe.meetings for convenience
+    
+    # Get sessions from specific meeting
+    meeting = client.get_meeting(year=2026, meeting="Australia")
+    meeting.sessions
+    
+    # Get a specific session
+    meeting.get_session(name="Qualifying") # Directly
+    # Using convenience properties
+    meeting.q # qualifying
+    meeting.sq # sprint qualifying (if available, else throws ValueError)
+    
+    # Get session directly and look at available data
+    session_index = client.get(year=2026, meeting="Australia", session="Qualifying")
+    session_index.available_feeds
 ```
 
 ### Get data

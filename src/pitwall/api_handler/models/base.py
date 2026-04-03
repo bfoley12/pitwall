@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
 import re
+from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from datetime import datetime
 from typing import Any, ClassVar, Generic, TypeVar
@@ -166,6 +166,7 @@ class F1KeyframeContainer(F1Model, Generic[F1FrameT_co]):
     def explain(cls) -> str:
         return "Not implemented"
 
+
 class F1DataContainer(
     F1KeyframeContainer[F1FrameT_co], Generic[F1FrameT_co, F1StreamT_co]
 ):
@@ -176,7 +177,6 @@ class F1DataContainer(
     @property
     def df(self) -> pl.DataFrame:
         return self.stream.data
-
 
 
 F1ModelT = TypeVar("F1ModelT", bound=F1Model)

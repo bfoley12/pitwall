@@ -295,6 +295,13 @@ class SessionIndexKeyframe(F1Frame):
         feed_kwargs["extra"] = extra
         return feed_kwargs
 
+    def available_feeds(self) -> dict[str, Feed]:
+        return {
+            name: value
+            for name in type(self).model_fields
+            if name != "extra" and (value := getattr(self, name)) is not _SENTINEL
+        }
+
     @override
     def __str__(self) -> str:
         set_feeds = {k: v for k, v in self.__dict__.items() if isinstance(v, Feed)}  # pyright: ignore[reportAny] - constrained by __dict__ built-in
@@ -309,3 +316,7 @@ class SessionIndex(F1KeyframeContainer[SessionIndexKeyframe]):
     KEYFRAME_FILE: ClassVar[str | None] = "Index.json"
 
     keyframe: SessionIndexKeyframe
+
+    @property
+    def available_feeds(self) -> dict[str, Feed]:
+        return self.keyframe.available_feeds()

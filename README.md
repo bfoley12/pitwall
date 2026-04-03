@@ -19,7 +19,7 @@ Like its namesake, pitwall sits close to the action - just one layer above the r
 ## Getting Started
 
 ### Install
-```python
+```bash
 # uv
 uv add pitwall
 
@@ -33,23 +33,22 @@ from pitwall import DirectClient
 
 with DirectClient() as client:
     # Available years
-    client.get_available_years()
+    client.get_available_seasons()
     
     # Get meetings from specific year
-    season = client.get(model="Season", year=2026) # Using unified client.get
     season = client.get_season(year=2026) # Using convenience method
     season.keyframe.meetings
     season.meetings # Aliases season.keyframe.meetings for convenience
     
     # Get sessions from specific meeting
-    meeting = client.get_meeting(year=2026, meeting="Australia")
+    meeting = season.get_meeting(meeting="Australia")
     meeting.sessions
     
     # Get a specific session
-    meeting.get_session(name="Qualifying") # Directly
+    meeting.get_session(name="Qualifying")
     # Using convenience properties
-    meeting.q # qualifying
-    meeting.sq # sprint qualifying (if available, else throws ValueError)
+    meeting.fp1 # Free Practice 1
+    meeting.q # Qualifying
     
     # Get session directly and look at available data
     session_index = client.get(year=2026, meeting="Australia", session="Qualifying")

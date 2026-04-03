@@ -87,9 +87,24 @@ async def _(AsyncDirectClient):
 
 @app.cell
 def _(DirectClient):
-    _client = DirectClient()
-    _meeting = _client.get_meeting(year=2026, meeting="Australia")
-    _client.get(year=2026, meeting="Australia", session="Qualifying").available_feeds
+    with DirectClient() as _client:
+        # Available years
+        _client.get_available_seasons()
+    
+        # Get meetings from specific year
+        _season = _client.get_season(year=2026) # Using convenience method
+        _season.keyframe.meetings
+        _season.meetings # Aliases season.keyframe.meetings for convenience
+    
+        # Get sessions from specific meeting
+        _meeting = _season.get_meeting(name="Australia")
+        _meeting.sessions
+    
+        # Get a specific session
+        _meeting.get_session(name="Qualifying")
+        # Using convenience properties
+        _meeting.fp1 # Free Practice 1
+        _meeting.q # Qualifying
     return
 
 

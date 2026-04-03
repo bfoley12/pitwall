@@ -20,8 +20,8 @@ class SeasonKeyframe(F1Frame):
         self.meetings.sort(key=lambda m: m.number)
         return self
 
-    def get_meeting(self, query: str) -> Meeting:
-        q = query.strip().casefold()
+    def get_meeting(self, name: str) -> Meeting:
+        n = name.strip().casefold()
         matches: list[Meeting] = []
         for meeting in self.meetings:
             candidates = [
@@ -31,13 +31,13 @@ class SeasonKeyframe(F1Frame):
                 meeting.country.name,
                 meeting.folder_name,
             ]
-            if any(q in c.casefold() for c in candidates):
+            if any(n in c.casefold() for c in candidates):
                 matches.append(meeting)
 
         if not matches:
             available = [f"{m.name} ({m.location})" for m in self.meetings]
             raise ValueError(
-                f"No meeting matching {query!r}. Available:\n"
+                f"No meeting matching {name!r}. Available:\n"
                 + "\n".join(f"  - {a}" for a in available)
             )
 
@@ -51,7 +51,7 @@ class SeasonKeyframe(F1Frame):
 
         ambiguous = [f"{m.name} ({m.location})" for m in matches]
         raise ValueError(
-            f"Ambiguous match for {query!r}. Did you mean:\n"
+            f"Ambiguous match for {name!r}. Did you mean:\n"
             + "\n".join(f"  - {a}" for a in ambiguous)
         )
 
@@ -79,3 +79,6 @@ class Season(F1KeyframeContainer[SeasonKeyframe]):
     @property
     def meetings(self) -> list[Meeting]:
         return self.keyframe.meetings
+
+    def get_meeting(self, name: str) -> Meeting:
+        return self.keyframe.get_meeting(name)

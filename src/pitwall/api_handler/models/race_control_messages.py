@@ -3,7 +3,7 @@ from enum import StrEnum
 from typing import Annotated, ClassVar, Literal, override
 
 import polars as pl
-from pydantic import Discriminator, Field, JsonValue, Tag, model_validator
+from pydantic import BeforeValidator, Discriminator, Field, JsonValue, Tag, model_validator
 
 from pitwall.api_handler.registry import register
 
@@ -39,9 +39,21 @@ class DrsStatus(StrEnum):
     ENABLED = "ENABLED"
 
 
+_SAFETY_CAR_ALIASES: dict[str, str] = {
+    "VSC": "VIRTUAL SAFETY CAR",
+    "SC": "SAFETY CAR",
+}
+
+
 class SafetyCarMode(StrEnum):
     SAFETY_CAR = "SAFETY CAR"
     VIRTUAL_SAFETY_CAR = "VIRTUAL SAFETY CAR"
+
+    @classmethod
+    def parse(cls, value: str) -> SafetyCarMode:
+        normalized = value.strip().upper()
+        normalized = _SAFETY_CAR_ALIASES.get(normalized, normalized)
+        return cls(normalized)
 
 
 class RcmCategory(StrEnum):
@@ -60,10 +72,12 @@ class RaceControlBase(F1Model):
     message: str
 
 
+ParsedSafetyCarMode = Annotated[SafetyCarMode, BeforeValidator(SafetyCarMode.parse)]
+
 class SafetyCarMessage(RaceControlBase):
     category: Literal["SafetyCar"]
     status: SafetyCarStatus
-    mode: SafetyCarMode
+    mode: ParsedSafetyCarMode
 
 
 class FlagMessage(RaceControlBase):

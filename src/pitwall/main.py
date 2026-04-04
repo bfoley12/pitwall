@@ -23,6 +23,7 @@ from pitwall.api_handler.models.position import Position
 from pitwall.api_handler.models.race_control_messages import RaceControlMessages
 from pitwall.api_handler.models.season import Season
 from pitwall.api_handler.models.session import SessionIndex, SessionSubType
+from pitwall.api_handler.models.session_data import SessionData
 from pitwall.api_handler.models.session_info import SessionInfo
 from pitwall.api_handler.models.session_status import SessionStatus
 from pitwall.api_handler.models.timing_app_data import TimingAppData
@@ -498,6 +499,7 @@ def overtake_series(
     )
     print(df)
 
+
 @app.command()
 def weather_data_series(
     year: int = DEFAULTS.year,
@@ -511,6 +513,22 @@ def weather_data_series(
         session=SessionSubType.parse(session),
     )
     print(df)
+
+
+@app.command()
+def session_data(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get(
+        model=SessionData,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
+    )
+    print(df)
+
 
 if __name__ == "__main__":
     app()

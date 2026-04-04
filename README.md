@@ -39,7 +39,7 @@ Like its namesake, pitwall sits close to the action - just one layer above the r
 | ChampionshipPrediction | ✅ | ✅ |
 | DriverRaceInfo | ✅ | ✅ |
 | SessionInfo | ✅ | ✅ |
-| SessionData | ❌ | ❌ |
+| SessionData | ✅ | ✅ |
 | SessionStatus | ✅ | ✅ |
 | ArchiveStatus | ✅ | ✅ |
 | Heartbeat | ✅ | ✅ |
@@ -68,20 +68,20 @@ from pitwall import DirectClient
 with DirectClient() as client:
     # Available seasons
     client.get_available_seasons()
-    
+
     # Get meetings from specific year
     season = client.get_season(year=2026) # Using convenience method
     season.meetings # Aliases season.keyframe.meetings for convenience
-    
+
     # Get sessions from specific meeting
     meeting = season.get_meeting(meeting="Australia")
     meeting.sessions
-    
+
     # Get a specific session
     meeting.get_session(name="Qualifying")
     # Using convenience properties
     meeting.q # Qualifying
-    
+
     # Get session directly from client and look at available data
     session_index = client.get(year=2026, meeting="Australia", session="Qualifying")
     session_index.available_feeds

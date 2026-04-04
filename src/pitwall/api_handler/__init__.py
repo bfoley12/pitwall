@@ -3,5 +3,11 @@ from . import (
     registry,
 )
 from .client import AsyncDirectClient, DirectClient
+from .settings import ClientSettings
 
-__all__ = ["AsyncDirectClient", "DirectClient", "registry"]
+__all__ = [
+    "AsyncDirectClient",
+    "ClientSettings",
+    "DirectClient",
+    "registry",
+]

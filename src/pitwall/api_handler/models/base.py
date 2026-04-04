@@ -26,11 +26,11 @@ class F1Model(BaseModel):
 
     @staticmethod
     def _as_dict(value: JsonValue) -> dict[str, JsonValue]:
-        return value if isinstance(value, dict) else {}
+        return value if isinstance(value, dict) else {"1": value}
 
     @staticmethod
     def _as_str(value: JsonValue) -> str:
-        return value if isinstance(value, str) else ""
+        return value if isinstance(value, str) else f"{value}"
 
 
 class F1Frame(F1Model):

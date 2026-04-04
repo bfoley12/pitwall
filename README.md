@@ -11,7 +11,41 @@ pitwall takes a different approach. It maps the livetiming feeds directly, prese
 Like its namesake, pitwall sits close to the action - just one layer above the raw data.
 
 ## Supported Feeds
-
+| Feed | Keyframe (`.json`) | Stream (`.jsonStream`) |
+|------|:-------:|:-------------:|
+| TimingDataF1 | ✅ | ✅ |
+| TimingStats | ✅ | ✅ |
+| TimingAppData | ✅ | ✅ |
+| LapSeries | ✅ | ✅ |
+| TyreStintSeries | ✅ | ✅ |
+| DriverTracker | ✅ | ✅ |
+| OvertakeSeries | ✅ | ✅ |
+| PitStop | ✅ | ✅ |
+| PitStopSeries | ✅ | ✅ |
+| CurrentTyres | ✅ | ✅ |
+| TimingData | ✅ | ✅ |
+| LapCount | ✅ | ✅ |
+| TopThree | ✅ | ✅ |
+| CarData.z | ✅ | ✅ |
+| Position.z | ✅ | ✅ |
+| RaceControlMessages | ✅ | ✅ |
+| TrackStatus | ✅ | ✅ |
+| TlaRcm | ✅ | ✅ |
+| TeamRadio | ✅ | ✅ |
+| WeatherData | ✅ | ✅ |
+| WeatherDataSeries | ✅ | ✅ |
+| DriverList | ✅ | ✅ |
+| PitLaneTimeCollection | ✅ | ✅ |
+| ChampionshipPrediction | ✅ | ✅ |
+| DriverRaceInfo | ✅ | ✅ |
+| SessionInfo | ✅ | ✅ |
+| SessionData | ❌ | ❌ |
+| SessionStatus | ✅ | ✅ |
+| ArchiveStatus | ✅ | ✅ |
+| Heartbeat | ✅ | ✅ |
+| ExtrapolatedClock | ✅ | ✅ |
+| ContentStreams | ✅ | ✅ |
+| AudioStreams | ✅ | ✅ |
 
 ## Data Model
 
@@ -27,17 +61,16 @@ uv add pitwall
 pip install pitwall
 ```
 
-### Discovery
+### Data Exploration
 ```python
 from pitwall import DirectClient
 
 with DirectClient() as client:
-    # Available years
+    # Available seasons
     client.get_available_seasons()
     
     # Get meetings from specific year
     season = client.get_season(year=2026) # Using convenience method
-    season.keyframe.meetings
     season.meetings # Aliases season.keyframe.meetings for convenience
     
     # Get sessions from specific meeting
@@ -47,10 +80,9 @@ with DirectClient() as client:
     # Get a specific session
     meeting.get_session(name="Qualifying")
     # Using convenience properties
-    meeting.fp1 # Free Practice 1
     meeting.q # Qualifying
     
-    # Get session directly and look at available data
+    # Get session directly from client and look at available data
     session_index = client.get(year=2026, meeting="Australia", session="Qualifying")
     session_index.available_feeds
 ```
@@ -60,15 +92,15 @@ with DirectClient() as client:
 ```python
 from pitwall import DirectClient
 
-client = DirectClient()
 
-# Can also use DirectClient as a context manager:
-# with DirectClient() as client:
-#   ...
+# Can also use DirectClient as a long-lived instance:
+# client = DirectClient()
+# val = client.get(...)
 
-# Request CarData and Position from livetiming API
-car_data = client.get(model="CarData", year=2026, meeting="Shanghai", session="Race") # Returns a Keyframe+Stream of CarData
-position = client.get(model="Position", year=2026, meeting="Shanghai", session="Race") # Returns a Keyframe+Stream of Position
+with DirectClient() as client:
+    # Request CarData and Position from livetiming API
+    car_data = client.get(model="CarData", year=2026, meeting="Shanghai", session="Race") # Returns a Keyframe+Stream of CarData
+    position = client.get(model="Position", year=2026, meeting="Shanghai", session="Race") # Returns a Keyframe+Stream of Position
 
 car_df = car_data.df
 position_df = position.df

@@ -32,6 +32,7 @@ from .top_three import TopThree
 from .track_status import TrackStatus
 from .tyre_stint_series import TyreStintSeries
 from .weather_data import WeatherData
+from .weather_data_series import WeatherDataSeries
 
 __all__ = [
     "ArchiveStatus",
@@ -68,4 +69,5 @@ __all__ = [
     "TrackStatus",
     "TyreStintSeries",
     "WeatherData",
+    "WeatherDataSeries",
 ]

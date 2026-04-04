@@ -33,6 +33,7 @@ from pitwall.api_handler.models.top_three import TopThree
 from pitwall.api_handler.models.track_status import TrackStatus
 from pitwall.api_handler.models.tyre_stint_series import TyreStintSeries
 from pitwall.api_handler.models.weather_data import WeatherData
+from pitwall.api_handler.models.weather_data_series import WeatherDataSeries
 
 app = typer.Typer()
 
@@ -497,6 +498,19 @@ def overtake_series(
     )
     print(df)
 
+@app.command()
+def weather_data_series(
+    year: int = DEFAULTS.year,
+    meeting: str = DEFAULTS.meeting,
+    session: str = DEFAULTS.session,
+) -> None:
+    df = client.get(
+        model=WeatherDataSeries,
+        year=year,
+        meeting=meeting,
+        session=SessionSubType.parse(session),
+    )
+    print(df)
 
 if __name__ == "__main__":
     app()

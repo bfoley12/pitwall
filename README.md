@@ -129,3 +129,21 @@ joined_df = car_df.join_asof(
     position_df, on="timestamp", by="racing_number", strategy="nearest"
 )
 ```
+
+## Modify (Async)DirectClient settings
+Since your connection to livetiming may be different from the testing environment, we allow for customization of ClientSettings. Check settings::ClientSettings for what can be changed.
+```python
+from pitwall import AsyncDirectClient, ClientSettings
+
+settings = ClientSettings(
+    total_timeout = 10, # Set max allowed time to wait for client to 10s
+    request_timeout = 2 # Set max allowed time to wait per request to 2s
+)
+
+async_client = AsyncDirectClient(settings=settings)
+# Note: For DirectClient, total_timeout does not have any effect at the moment.
+# Each request is still limited to request timeout, so the max waited for is 3x request_timeout
+sync_client = DirectClient(settings=settings)
+
+sync_client.get(year=2026)
+```

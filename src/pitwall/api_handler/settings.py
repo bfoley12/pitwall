@@ -7,5 +7,5 @@ class ClientSettings(BaseSettings):
     max_connections: int = 10
     max_keepalive_connections: int = 5
     follow_redirects: bool = True
-    timeout: float = 5.0
+    total_timeout: float = 5.0
     request_timeout: float = 10

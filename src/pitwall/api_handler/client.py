@@ -83,7 +83,7 @@ class _BaseClient:
 
         self._settings: ClientSettings = settings
         self._TIMEOUT: httpx.Timeout = httpx.Timeout(
-            timeout=settings.timeout, connect=settings.connect, read=settings.read
+            timeout=settings.request_timeout, connect=settings.connect, read=settings.read
         )
         self._LIMITS: httpx.Limits = httpx.Limits(
             max_connections=settings.max_connections,
@@ -294,7 +294,7 @@ class AsyncDirectClient(_BaseClient):
                 r_session = None
 
         tasks: dict[str, asyncio.Task[list[dict[str, JsonValue]]]] = {}
-        async with asyncio.timeout(self._settings.request_timeout):
+        async with asyncio.timeout(self._settings.total_timeout):
             async with asyncio.TaskGroup() as tg:
                 if resolved.KEYFRAME_FILE is not None and not stream_only:
                     tasks["keyframe"] = tg.create_task(
@@ -343,7 +343,7 @@ class AsyncDirectClient(_BaseClient):
         years = range(2018, date.today().year + 1)
         tasks: dict[int, asyncio.Task[Season | None]] = {}
 
-        async with asyncio.timeout(self._settings.request_timeout):
+        async with asyncio.timeout(self._settings.total_timeout):
             async with asyncio.TaskGroup() as tg:
                 for year in years:
                     tasks[year] = tg.create_task(self.get_season(year))

@@ -139,7 +139,7 @@ joined_df = car_df.join_asof(
 )
 ```
 
-## Modify (Async)DirectClient settings
+### Modify (Async)DirectClient settings
 Since your connection to livetiming may be different from the testing environment, we allow for customization of ClientSettings. Check settings::ClientSettings for what can be changed.
 ```python
 from pitwall import AsyncDirectClient, ClientSettings

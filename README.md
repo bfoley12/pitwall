@@ -1,6 +1,6 @@
 # pitwall
 ## Motivation
-The F1 livetiming API at livetiming.formula1.com exposes a rich set of data feeds - car telemetry, position data, timing, tyre stints, race control messages, weather, pit lane times, and more - going back to 2018. Existing tools access parts of this API but make tradeoffs that aren't right for every use case.
+The F1 livetiming API at https://livetiming.formula1.com exposes a rich set of data feeds - car telemetry, position data, timing, tyre stints, race control messages, weather, pit lane times, and more - going back to 2018. Existing tools access parts of this API but make tradeoffs that aren't right for every use case.
 
 FastF1 is an excellent analysis-first library, but it consumes raw feeds internally and surfaces its own higher-level abstractions built on Pandas. While they deliver high quality, processed views of the data, some power-analysts may want to handle the raw data directly.
 
@@ -11,6 +11,9 @@ pitwall takes a different approach. It maps the livetiming feeds directly, prese
 Like its namesake, pitwall sits close to the action - just one layer above the raw data.
 
 ## Supported Feeds
+<details>
+<summary>Supported Feeds (32)</summary>
+
 | Feed | Keyframe (`.json`) | Stream (`.jsonStream`) |
 |------|:-------:|:-------------:|
 | TimingDataF1 | ✅ | ✅ |
@@ -47,8 +50,14 @@ Like its namesake, pitwall sits close to the action - just one layer above the r
 | ContentStreams | ✅ | ✅ |
 | AudioStreams | ✅ | ✅ |
 
-## Data Model
+</details>
 
+## Data Model
+The livetiming API is a hierarchical API that progressively provides more information. The base of the API is https://livetiming.formula1.com/static (from here on, we will refer to that as root - '/' and reference the API layers as starting from '/'). Most layers provides an Index.json that we can learn about the available endpoints to dive deeper into. For example, /Index.json shows the current year (why it doesn't show every available year is not known to me). /{year}/Index.json provides a list of meetings (race or testing weekends) with their relevant sessions (FP1, Qualifying, etc.). Oddly, /{year}/{meeting} does not provide an Index.json file. /{year}/{meeting}/{session}/Index.json displays all available 'feeds' for a session. A 'feed' refers to a single collection of data submitted either as a .json file (a 'keyframe') or a .jsonStream (aka .jsonl) file (a 'stream'). 
+
+A keyframe represents a static json, while streams are dynamic, partial updates throughout the course of a session. This makes Pydantic a natural package to model the fields. Streams are recorded as .jsonStream (aka .jsonl) files, timestamped by the session time as a duration. Polars is used to represent the streamed data.
+
+Consistency is prioritized across returned models. Each model contains a 'keyframe' and 'stream' (with the exceptions of Season, Meeting, and Session, since they only offer an Index.json file). It is up to the user to determine whether they need the data from the stream or the keyframe, as some feeds are represented better in the stream (ie. CarData and Position keyframes are not useful for many applications). In anticipation of many use cases relying on the stream's dataframe, a property is provided directly on the F1DataContainer object: obj.df.
 
 ## Getting Started
 
@@ -119,10 +128,10 @@ from pitwall import AsyncDirectClient
 async with AsyncDirectClient() as client:
     # Launch multiple jobs at the same time (this sends 4 requests - 1 for keyframe and 1 for stream in each client.get)
     car_data, position = await asyncio.gather(
-        client.get("CarData", year=2024, meeting="Monza", session="Race"),
-        client.get("Position", year=2024, meeting="Monza", session="Race"),
+        client.get(model="CarData", year=2024, meeting="Monza", session="Race"),
+        client.get(model="Position", year=2024, meeting="Monza", session="Race"),
     )
-car_df = car_data.df
+car_df = car_data.df # Alias to car_data.stream.data
 position_df = position.df
 
 joined_df = car_df.join_asof(

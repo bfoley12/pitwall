@@ -1,5 +1,4 @@
 import re
-from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from datetime import datetime
 from typing import Any, ClassVar, Generic, TypeVar

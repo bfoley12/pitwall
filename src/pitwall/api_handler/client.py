@@ -83,7 +83,9 @@ class _BaseClient:
 
         self._settings: ClientSettings = settings
         self._TIMEOUT: httpx.Timeout = httpx.Timeout(
-            timeout=settings.request_timeout, connect=settings.connect, read=settings.read
+            timeout=settings.request_timeout,
+            connect=settings.connect,
+            read=settings.read,
         )
         self._LIMITS: httpx.Limits = httpx.Limits(
             max_connections=settings.max_connections,

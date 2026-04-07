@@ -44,6 +44,7 @@ pitwall = "pitwall.main:app"
 line-length = 88
 target-version = "py314"
 src=["src"]
+exclude=["examples"]
 
 [tool.ruff.lint]
 select = [
@@ -81,6 +82,16 @@ venvPath = "."
 venv = ".venv"
 pythonVersion = "3.14"
 extraPaths = ["src"]
+exclude=["examples"]
+
+[[tool.basedpyright.executionEnvironments]]
+root = "tests"
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportPrivateUsage = false
+reportUnusedCallResult = false
+reportUnknownVariableType = false
+reportIgnoreCommentWithoutRule = false
 
 [tool.marimo.runtime]
 output_max_bytes = 10_000_000

@@ -8,12 +8,13 @@ from datetime import date
 
 import httpx
 import pytest
+from pydantic import JsonValue
 
 from pitwall.api_handler.client import (
-    _BaseClient,  # pyright: ignore[reportPrivateUsage]
-    _decompress,  # pyright: ignore[reportPrivateUsage]
-    _is_retryable,  # pyright: ignore[reportPrivateUsage]
-    _validate_year,  # pyright: ignore[reportPrivateUsage]
+    _BaseClient,
+    _decompress,
+    _is_retryable,
+    _validate_year,
 )
 from pitwall.api_handler.settings import ClientSettings
 
@@ -77,20 +78,20 @@ class TestIsRetryable:
 
 class TestDecompress:
     @staticmethod
-    def _compress(data: dict) -> str:
+    def _compress(data: dict[str, JsonValue]) -> str:
         """Create a base64-encoded zlib-compressed blob (raw deflate)."""
         raw = json.dumps(data).encode()
         compressed = zlib.compress(raw, level=6)[2:-4]  # strip zlib header/checksum
         return base64.b64encode(compressed).decode()
 
     def test_round_trips(self) -> None:
-        original = {"key": "value", "nested": {"a": 1}}
+        original: dict[str, JsonValue] = {"key": "value", "nested": {"a": 1}}
         blob = self._compress(original)
         result = _decompress(blob)
         assert result == original
 
     def test_handles_missing_padding(self) -> None:
-        original = {"test": True}
+        original: dict[str, JsonValue] = {"test": True}
         blob = self._compress(original).rstrip("=")
         result = _decompress(blob)
         assert result == original
@@ -104,7 +105,7 @@ class TestBuildUrl:
     def client(self) -> _BaseClient:
         return _BaseClient(settings=ClientSettings())
 
-    BASE = "https://livetiming.formula1.com/static"
+    BASE: str = "https://livetiming.formula1.com/static"
 
     def test_no_args(self, client: _BaseClient) -> None:
         assert client._build_url() == f"{self.BASE}/Index.json"
@@ -154,7 +155,7 @@ class TestDecodeResponse:
         return httpx.Response(200, text=text)
 
     def test_json_returns_single_item_list(self) -> None:
-        payload = {"Year": 2023, "Meetings": []}
+        payload: dict[str, int | list[None]] = {"Year": 2023, "Meetings": []}
         response = self._make_response(json.dumps(payload))
         result = _BaseClient._decode_response(response, "Index.json")
         assert result == [payload]
@@ -177,8 +178,8 @@ class TestDecodeResponse:
         assert result[0]["Timestamp"] == "00:00:01.000"
         assert result[1]["Timestamp"] == "00:05:30.500"
         # Data should be the parsed JSON payload
-        assert result[0]["Data"]["Value"] == 1
-        assert result[1]["Data"]["Value"] == 2
+        assert result[0]["Data"]["Value"] == 1  # pyright: ignore
+        assert result[1]["Data"]["Value"] == 2  # pyright: ignore
 
     def test_json_stream_strips_bom(self) -> None:
         lines = '\ufeff00:00:01.000{"key":"val"}\r\n'

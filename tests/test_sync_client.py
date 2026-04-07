@@ -251,5 +251,5 @@ class TestContextManager:
 
     def test_default_settings(self) -> None:
         client = DirectClient()
-        assert client._settings is not None  # pyright: ignore[reportPrivateUsage]
-        client._client.close()  # pyright: ignore[reportPrivateUsage]
+        assert client._settings is not None
+        client._client.close()

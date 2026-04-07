@@ -260,5 +260,5 @@ class TestContextManager:
 
     async def test_default_settings(self) -> None:
         client = AsyncDirectClient()
-        assert client._settings is not None  # pyright: ignore[reportPrivateUsage]
-        await client._client.aclose()  # pyright: ignore[reportPrivateUsage]
+        await client._client.aclose()
+        assert client._settings is not None

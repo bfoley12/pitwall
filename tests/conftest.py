@@ -29,7 +29,7 @@ def no_retry_backoff(monkeypatch: pytest.MonkeyPatch) -> None:
 
     import time
 
-    monkeypatch.setattr(time, "sleep", lambda _: None)  # pyright: ignore[reportUnknownLambdaType, reportUnknownArgumentType]
+    monkeypatch.setattr(time, "sleep", lambda _: None)  # pyright: ignore[reportUnknownLambdaType]
 
 
 # ── Canned response data ─────────────────────────────────────────────

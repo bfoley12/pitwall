@@ -15,9 +15,9 @@ Run tests, lint, and type check before submitting anything:
 
 ```bash
 uv run pytest
-uv run ruff format
-uv run ruff check (--fix (--unsafe-fixes))
-uv run basedpyright
+ruff format
+ruff check (--fix (--unsafe-fixes))
+basedpyright
 ```
 
 Both must pass clean.

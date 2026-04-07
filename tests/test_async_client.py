@@ -5,8 +5,8 @@ import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
-from pitwall.api_handler.client import AsyncDirectClient
-from pitwall.api_handler.settings import ClientSettings
+from timingtower.api_handler.client import AsyncDirectClient
+from timingtower.api_handler.settings import ClientSettings
 
 BASE = "https://livetiming.formula1.com/static"
 
@@ -218,7 +218,7 @@ class TestGet:
         timing_data_keyframe: str,
         timing_data_stream: str,
     ) -> None:
-        from pitwall.api_handler.models.timing_data import TimingDataF1
+        from timingtower.api_handler.models.timing_data import TimingDataF1
 
         # Season resolution
         httpx_mock.add_response(text=season_index)

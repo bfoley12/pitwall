@@ -9,7 +9,7 @@ def _():
     import plotly.express as px
     import polars as pl
 
-    from pitwall import DirectClient
+    from timingtower import DirectClient
 
     return (DirectClient,)
 
@@ -58,7 +58,7 @@ def _(client) -> None:
 async def _():
     import asyncio
 
-    from pitwall import AsyncDirectClient
+    from timingtower import AsyncDirectClient
 
     # Use the async client as a context manager
     async with AsyncDirectClient() as async_client:

@@ -1,4 +1,4 @@
-# pitwall
+# timingtower
 ## Motivation
 The F1 livetiming API at https://livetiming.formula1.com exposes a rich set of data feeds - car telemetry, position data, timing, tyre stints, race control messages, weather, pit lane times, and more - going back to 2018. Existing tools access parts of this API but make tradeoffs that aren't right for every use case.
 
@@ -6,9 +6,9 @@ The F1 livetiming API at https://livetiming.formula1.com exposes a rich set of d
 
 [OpenF1](https://github.com/br-g/openf1) is a hosted REST API that proxies a subset of the feed data into simplified JSON endpoints. It's convenient for quick queries but only covers 2023 onward and restructures the data into its own schema.
 
-pitwall takes a different approach. It maps the livetiming feeds directly, preserving their original structure while wrapping them in Pydantic V2 models and Polars DataFrames. The raw data stays intact - pitwall doesn't decide what's relevant or how fields should be combined. It gives you typed, validated access to the feeds as they exist, on a modern stack that's faster and more ergonomic than Pandas.
+timingtower takes a different approach. It maps the livetiming feeds directly, preserving their original structure while wrapping them in Pydantic V2 models and Polars DataFrames. The raw data stays intact - timingtower doesn't decide what's relevant or how fields should be combined. It gives you typed, validated access to the feeds as they exist, on a modern stack that's faster and more ergonomic than Pandas.
 
-Like its namesake, pitwall sits close to the action - just one layer above the raw data.
+Like its namesake, timingtower sits close to the action - just one layer above the raw data.
 
 
 ## Data Model
@@ -23,15 +23,15 @@ Consistency is prioritized across returned models. Each model contains a 'keyfra
 ### Install
 ```bash
 # uv
-uv add pitwall
+uv add timingtower
 
 # pip
-pip install pitwall
+pip install timingtower
 ```
 
 ### Data Exploration
 ```python
-from pitwall import DirectClient
+from timingtower import DirectClient
 
 with DirectClient() as client:
     # Available seasons
@@ -58,7 +58,7 @@ with DirectClient() as client:
 ### Get data
 #### Synchronously
 ```python
-from pitwall import DirectClient
+from timingtower import DirectClient
 
 
 # Can also use DirectClient as a long-lived instance:
@@ -81,7 +81,7 @@ joined_df = car_df.join_asof(
 
 ```python
 import asyncio
-from pitwall import AsyncDirectClient
+from timingtower import AsyncDirectClient
 
 # Use the async client as a context manager
 async with AsyncDirectClient() as client:
@@ -101,7 +101,7 @@ joined_df = car_df.join_asof(
 ### Modify (Async)DirectClient settings
 Since your connection to livetiming may be different from the testing environment, we allow for customization of ClientSettings. Check settings::ClientSettings for what can be changed.
 ```python
-from pitwall import AsyncDirectClient, ClientSettings
+from timingtower import AsyncDirectClient, ClientSettings
 
 settings = ClientSettings(
     total_timeout = 10, # Set max allowed time to wait for client to 10s
@@ -122,44 +122,44 @@ sync_client.get(year=2026)
 
 | Feed | Keyframe (`.json`) | Stream (`.jsonStream`) |
 |------|:-----:|:-----:|
-| [TimingDataF1](src/pitwall/api_handler/models/timing_data.py) | ✅ | ✅ |
-| [TimingStats](src/pitwall/api_handler/models/timing_stats.py) | ✅ | ✅ |
-| [TimingAppData](src/pitwall/api_handler/models/timing_app_data.py) | ✅ | ✅ |
-| [LapSeries](src/pitwall/api_handler/models/lap_series.py) | ✅ | ✅ |
-| [TyreStintSeries](src/pitwall/api_handler/models/tyre_stint_series.py) | ✅ | ✅ |
-| [DriverTracker](src/pitwall/api_handler/models/driver_tracker.py) | ✅ | ✅ |
-| [OvertakeSeries](src/pitwall/api_handler/models/overtake_series.py) | ✅ | ✅ |
-| [PitStop](src/pitwall/api_handler/models/pit_stop.py) | ✅ | ✅ |
-| [PitStopSeries](src/pitwall/api_handler/models/pit_stop_series.py) | ✅ | ✅ |
-| [CurrentTyres](src/pitwall/api_handler/models/current_tyres.py) | ✅ | ✅ |
-| [TimingData](src/pitwall/api_handler/models/timing_data.py) | ✅ | ✅ |
-| [LapCount](src/pitwall/api_handler/models/lap_count.py) | ✅ | ✅ |
-| [TopThree](src/pitwall/api_handler/models/top_three.py) | ✅ | ✅ |
-| [CarData.z](src/pitwall/api_handler/models/car_data.py) | ✅ | ✅ |
-| [Position.z](src/pitwall/api_handler/models/position.py) | ✅ | ✅ |
-| [RaceControlMessages](src/pitwall/api_handler/models/race_control_messages.py) | ✅ | ✅ |
-| [TrackStatus](src/pitwall/api_handler/models/track_status.py) | ✅ | ✅ |
-| [TlaRcm](src/pitwall/api_handler/models/tla_rcm.py) | ✅ | ✅ |
-| [TeamRadio](src/pitwall/api_handler/models/team_radio.py) | ✅ | ✅ |
-| [WeatherData](src/pitwall/api_handler/models/weather_data.py) | ✅ | ✅ |
-| [WeatherDataSeries](src/pitwall/api_handler/models/weather_data_series.py) | ✅ | ✅ |
-| [DriverList](src/pitwall/api_handler/models/driver_list.py) | ✅ | ✅ |
-| [PitLaneTimeCollection](src/pitwall/api_handler/models/pit_lane_time_collection.py) | ✅ | ✅ |
-| [ChampionshipPrediction](src/pitwall/api_handler/models/championship_prediction.py) | ✅ | ✅ |
-| [DriverRaceInfo](src/pitwall/api_handler/models/driver_race_info.py) | ✅ | ✅ |
-| [SessionInfo](src/pitwall/api_handler/models/session_info.py) | ✅ | ✅ |
-| [SessionData](src/pitwall/api_handler/models/session_data.py) | ✅ | ✅ |
-| [SessionStatus](src/pitwall/api_handler/models/session_status.py) | ✅ | ✅ |
-| [ArchiveStatus](src/pitwall/api_handler/models/archive_status.py) | ✅ | ✅ |
-| [Heartbeat](src/pitwall/api_handler/models/heartbeat.py) | ✅ | ✅ |
-| [ExtrapolatedClock](src/pitwall/api_handler/models/extrapolated_clock.py) | ✅ | ✅ |
-| [ContentStreams](src/pitwall/api_handler/models/content_streams.py) | ✅ | ✅ |
-| [AudioStreams](src/pitwall/api_handler/models/audio_streams.py) | ✅ | ✅ |
+| [TimingDataF1](src/timingtower/api_handler/models/timing_data.py) | ✅ | ✅ |
+| [TimingStats](src/timingtower/api_handler/models/timing_stats.py) | ✅ | ✅ |
+| [TimingAppData](src/timingtower/api_handler/models/timing_app_data.py) | ✅ | ✅ |
+| [LapSeries](src/timingtower/api_handler/models/lap_series.py) | ✅ | ✅ |
+| [TyreStintSeries](src/timingtower/api_handler/models/tyre_stint_series.py) | ✅ | ✅ |
+| [DriverTracker](src/timingtower/api_handler/models/driver_tracker.py) | ✅ | ✅ |
+| [OvertakeSeries](src/timingtower/api_handler/models/overtake_series.py) | ✅ | ✅ |
+| [PitStop](src/timingtower/api_handler/models/pit_stop.py) | ✅ | ✅ |
+| [PitStopSeries](src/timingtower/api_handler/models/pit_stop_series.py) | ✅ | ✅ |
+| [CurrentTyres](src/timingtower/api_handler/models/current_tyres.py) | ✅ | ✅ |
+| [TimingData](src/timingtower/api_handler/models/timing_data.py) | ✅ | ✅ |
+| [LapCount](src/timingtower/api_handler/models/lap_count.py) | ✅ | ✅ |
+| [TopThree](src/timingtower/api_handler/models/top_three.py) | ✅ | ✅ |
+| [CarData.z](src/timingtower/api_handler/models/car_data.py) | ✅ | ✅ |
+| [Position.z](src/timingtower/api_handler/models/position.py) | ✅ | ✅ |
+| [RaceControlMessages](src/timingtower/api_handler/models/race_control_messages.py) | ✅ | ✅ |
+| [TrackStatus](src/timingtower/api_handler/models/track_status.py) | ✅ | ✅ |
+| [TlaRcm](src/timingtower/api_handler/models/tla_rcm.py) | ✅ | ✅ |
+| [TeamRadio](src/timingtower/api_handler/models/team_radio.py) | ✅ | ✅ |
+| [WeatherData](src/timingtower/api_handler/models/weather_data.py) | ✅ | ✅ |
+| [WeatherDataSeries](src/timingtower/api_handler/models/weather_data_series.py) | ✅ | ✅ |
+| [DriverList](src/timingtower/api_handler/models/driver_list.py) | ✅ | ✅ |
+| [PitLaneTimeCollection](src/timingtower/api_handler/models/pit_lane_time_collection.py) | ✅ | ✅ |
+| [ChampionshipPrediction](src/timingtower/api_handler/models/championship_prediction.py) | ✅ | ✅ |
+| [DriverRaceInfo](src/timingtower/api_handler/models/driver_race_info.py) | ✅ | ✅ |
+| [SessionInfo](src/timingtower/api_handler/models/session_info.py) | ✅ | ✅ |
+| [SessionData](src/timingtower/api_handler/models/session_data.py) | ✅ | ✅ |
+| [SessionStatus](src/timingtower/api_handler/models/session_status.py) | ✅ | ✅ |
+| [ArchiveStatus](src/timingtower/api_handler/models/archive_status.py) | ✅ | ✅ |
+| [Heartbeat](src/timingtower/api_handler/models/heartbeat.py) | ✅ | ✅ |
+| [ExtrapolatedClock](src/timingtower/api_handler/models/extrapolated_clock.py) | ✅ | ✅ |
+| [ContentStreams](src/timingtower/api_handler/models/content_streams.py) | ✅ | ✅ |
+| [AudioStreams](src/timingtower/api_handler/models/audio_streams.py) | ✅ | ✅ |
 
 </details>
 
 ## Contributing
-pitwall is in early development and contributions are welcome - whether that's new feed implementations, tests, docs, or bug reports. See [CONTRIBUTING.md] for setup instructions and guidelines.
+timingtower is in early development and contributions are welcome - whether that's new feed implementations, tests, docs, or bug reports. See [CONTRIBUTING.md] for setup instructions and guidelines.
 
 ## Disclaimer
-pitwall is an unofficial project and is not affiliated with Formula 1 companies. All F1-related trademarks are owned by Formula One Licensing B.V.
+timingtower is an unofficial project and is not affiliated with Formula 1 companies. All F1-related trademarks are owned by Formula One Licensing B.V.

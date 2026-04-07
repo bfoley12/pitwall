@@ -1,13 +1,13 @@
-# Contributing to pitwall
+# Contributing to timingtower
 
-Thanks for your interest in contributing! pitwall is in early development (`0.x`), so the API is still evolving - but that also means there's plenty of room to shape things.
+Thanks for your interest in contributing! timingtower is in early development (`0.x`), so the API is still evolving - but that also means there's plenty of room to shape things.
 
 ## Setup
 Ensure that [uv](https://docs.astral.sh/uv/) and [just](https://just.systems/man/en/installation.html) are installed.
 
 ```bash
-git clone https://github.com/bfoley12/pitwall.git
-cd pitwall
+git clone https://github.com/bfoley12/timingtower.git
+cd timingtower
 just setup
 ```
 
@@ -31,7 +31,7 @@ Both must pass clean.
 
 ## What to work on
 
-Check [open issues](https://github.com/bfoley12/pitwall/issues) for anything tagged `good first issue` or `help wanted`. Some areas where contributions are especially useful:
+Check [open issues](https://github.com/bfoley12/timingtower/issues) for anything tagged `good first issue` or `help wanted`. Some areas where contributions are especially useful:
 
 - **Test coverage** for existing feeds
 - **Documentation** of existing classes and functions

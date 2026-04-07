@@ -1,5 +1,5 @@
 # tests/conftest.py
-"""Shared fixtures for pitwall tests."""
+"""Shared fixtures for timingtower tests."""
 
 import asyncio
 from collections.abc import AsyncIterator, Iterator
@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from pitwall.api_handler.client import AsyncDirectClient, DirectClient
-from pitwall.api_handler.settings import ClientSettings
+from timingtower.api_handler.client import AsyncDirectClient, DirectClient
+from timingtower.api_handler.settings import ClientSettings
 
 DATA_DIR = Path(__file__).parent / "data"
 

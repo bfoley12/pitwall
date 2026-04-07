@@ -10,13 +10,13 @@ import httpx
 import pytest
 from pydantic import JsonValue
 
-from pitwall.api_handler.client import (
+from timingtower.api_handler.client import (
     _BaseClient,
     _decompress,
     _is_retryable,
     _validate_year,
 )
-from pitwall.api_handler.settings import ClientSettings
+from timingtower.api_handler.settings import ClientSettings
 
 # ── _validate_year ────────────────────────────────────────────────────
 

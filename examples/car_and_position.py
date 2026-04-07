@@ -9,7 +9,7 @@ def _():
     import plotly.express as px
     import polars as pl
 
-    from pitwall import DirectClient
+    from timingtower import DirectClient
 
     return DirectClient, pl, px
 

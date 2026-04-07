@@ -7,8 +7,8 @@ import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
-from pitwall.api_handler.client import DirectClient
-from pitwall.api_handler.settings import ClientSettings
+from timingtower.api_handler.client import DirectClient
+from timingtower.api_handler.settings import ClientSettings
 
 BASE = "https://livetiming.formula1.com/static"
 

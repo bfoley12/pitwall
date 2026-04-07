@@ -44,7 +44,7 @@ pitwall = "pitwall.main:app"
 line-length = 88
 target-version = "py314"
 src=["src"]
-exclude=["examples"]
+exclude=["examples", ".venv"]
 
 [tool.ruff.lint]
 select = [
@@ -82,7 +82,7 @@ venvPath = "."
 venv = ".venv"
 pythonVersion = "3.14"
 extraPaths = ["src"]
-exclude=["examples"]
+exclude=["examples", ".venv"]
 
 [[tool.basedpyright.executionEnvironments]]
 root = "tests"

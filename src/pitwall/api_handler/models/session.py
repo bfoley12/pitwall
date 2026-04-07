@@ -299,7 +299,8 @@ class SessionIndexKeyframe(F1Frame):
         return {
             name: value
             for name in type(self).model_fields
-            if name != "extra" and (value := getattr(self, name)) is not _SENTINEL
+            if name != "extra"
+            and (value := cast(Feed, getattr(self, name))) is not _SENTINEL
         }
 
     @override

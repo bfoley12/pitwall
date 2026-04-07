@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "A thin, unopinionated wrapper of the F1 livetiming API. Provides typed values on a modern data stack."
 readme = "README.md"
 requires-python = ">=3.14"
+license = { text = "MIT" }
+authors = [{ name = "Brendan Foley", email = "brendanfoley1214@proton.me"}]
 dependencies = [
     "httpx>=0.28.1",
     "polars>=1.39.0",
@@ -23,6 +25,11 @@ dev = [
     "pytest-httpx>=0.36.0",
     "ruff>=0.15.6",
 ]
+
+[project.urls]
+Homepage = "https://github.com/bfoley12/timingtower"
+Repository = "https://github.com/bfoley12/timingtower"
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

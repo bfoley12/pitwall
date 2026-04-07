@@ -12,7 +12,7 @@ Like its namesake, pitwall sits close to the action - just one layer above the r
 
 
 ## Data Model
-The livetiming API is a hierarchical API that progressively provides more information. The base of the API is https://livetiming.formula1.com/static (from here on, we will refer to that as root - '/' and reference the API layers as starting from '/'). Most layers provides an Index.json that we can learn about the available endpoints to dive deeper into. For example, /Index.json shows the current year (why it doesn't show every available year is not known to me). /{year}/Index.json provides a list of meetings (race or testing weekends) with their relevant sessions (FP1, Qualifying, etc.). Oddly, /{year}/{meeting} does not provide an Index.json file. /{year}/{meeting}/{session}/Index.json displays all available 'feeds' for a session. A 'feed' refers to a single collection of data submitted either as a .json file (a 'keyframe') or a .jsonStream (aka .jsonl) file (a 'stream'). 
+The livetiming API is a hierarchical API that progressively provides more information. The base of the API is https://livetiming.formula1.com/static (from here on, we will refer to that as root - '/' and reference the API layers as starting from '/'). Most layers provide an Index.json that we can learn about the available endpoints to dive deeper into. For example, /Index.json shows the current year (why it doesn't show every available year is not known to me). /{year}/Index.json provides a list of meetings (race or testing weekends) with their relevant sessions (FP1, Qualifying, etc.). Oddly, /{year}/{meeting} does not provide an Index.json file. /{year}/{meeting}/{session}/Index.json displays all available 'feeds' for a session. A 'feed' refers to a single collection of data submitted either as a .json file (a 'keyframe') or a .jsonStream (aka .jsonl) file (a 'stream'). 
 
 A keyframe represents a static json, while streams are dynamic, partial updates throughout the course of a session. This makes Pydantic a natural package to model the keyframe. Streams are timestamped by the session time as a duration. Polars is used to represent the streamed data.
 
@@ -159,7 +159,7 @@ sync_client.get(year=2026)
 </details>
 
 ## Contributing
-pitwall is in early development and contributions are welcome — whether that's new feed implementations, tests, docs, or bug reports. See [CONTRIBUTING.md] for setup instructions and guidelines.
+pitwall is in early development and contributions are welcome - whether that's new feed implementations, tests, docs, or bug reports. See [CONTRIBUTING.md] for setup instructions and guidelines.
 
 ## Disclaimer
 pitwall is an unofficial project and is not affiliated with Formula 1 companies. All F1-related trademarks are owned by Formula One Licensing B.V.

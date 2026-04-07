@@ -14,10 +14,16 @@ uv sync
 Run tests, lint, and type check before submitting anything:
 
 ```bash
-uv run pytest
+just check
+```
+
+Or individually:
+
+```bash
 ruff format
 ruff check (--fix (--unsafe-fixes))
 basedpyright
+uv run pytest
 ```
 
 Both must pass clean.

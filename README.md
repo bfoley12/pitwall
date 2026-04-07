@@ -2,55 +2,14 @@
 ## Motivation
 The F1 livetiming API at https://livetiming.formula1.com exposes a rich set of data feeds - car telemetry, position data, timing, tyre stints, race control messages, weather, pit lane times, and more - going back to 2018. Existing tools access parts of this API but make tradeoffs that aren't right for every use case.
 
-FastF1 is an excellent analysis-first library, but it consumes raw feeds internally and surfaces its own higher-level abstractions built on Pandas. While they deliver high quality, processed views of the data, some power-analysts may want to handle the raw data directly.
+[FastF1](https://github.com/theOehrly/Fast-F1) is an excellent analysis-first library, but it consumes raw feeds internally and surfaces its own higher-level abstractions built on Pandas. While they deliver high quality, processed views of the data, some power-analysts may want to handle the raw data directly.
 
-OpenF1 is a hosted REST API that proxies a subset of the feed data into simplified JSON endpoints. It's convenient for quick queries but only covers 2023 onward and restructures the data into its own schema.
+[OpenF1](https://github.com/br-g/openf1) is a hosted REST API that proxies a subset of the feed data into simplified JSON endpoints. It's convenient for quick queries but only covers 2023 onward and restructures the data into its own schema.
 
 pitwall takes a different approach. It maps the livetiming feeds directly, preserving their original structure while wrapping them in Pydantic V2 models and Polars DataFrames. The raw data stays intact - pitwall doesn't decide what's relevant or how fields should be combined. It gives you typed, validated access to the feeds as they exist, on a modern stack that's faster and more ergonomic than Pandas.
 
 Like its namesake, pitwall sits close to the action - just one layer above the raw data.
 
-## Supported Feeds
-<details>
-<summary>Supported Feeds (32/32)</summary>
-
-| Feed | Keyframe (`.json`) | Stream (`.jsonStream`) |
-|------|:-------:|:-------------:|
-| TimingDataF1 | ✅ | ✅ |
-| TimingStats | ✅ | ✅ |
-| TimingAppData | ✅ | ✅ |
-| LapSeries | ✅ | ✅ |
-| TyreStintSeries | ✅ | ✅ |
-| DriverTracker | ✅ | ✅ |
-| OvertakeSeries | ✅ | ✅ |
-| PitStop | ✅ | ✅ |
-| PitStopSeries | ✅ | ✅ |
-| CurrentTyres | ✅ | ✅ |
-| TimingData | ✅ | ✅ |
-| LapCount | ✅ | ✅ |
-| TopThree | ✅ | ✅ |
-| CarData.z | ✅ | ✅ |
-| Position.z | ✅ | ✅ |
-| RaceControlMessages | ✅ | ✅ |
-| TrackStatus | ✅ | ✅ |
-| TlaRcm | ✅ | ✅ |
-| TeamRadio | ✅ | ✅ |
-| WeatherData | ✅ | ✅ |
-| WeatherDataSeries | ✅ | ✅ |
-| DriverList | ✅ | ✅ |
-| PitLaneTimeCollection | ✅ | ✅ |
-| ChampionshipPrediction | ✅ | ✅ |
-| DriverRaceInfo | ✅ | ✅ |
-| SessionInfo | ✅ | ✅ |
-| SessionData | ✅ | ✅ |
-| SessionStatus | ✅ | ✅ |
-| ArchiveStatus | ✅ | ✅ |
-| Heartbeat | ✅ | ✅ |
-| ExtrapolatedClock | ✅ | ✅ |
-| ContentStreams | ✅ | ✅ |
-| AudioStreams | ✅ | ✅ |
-
-</details>
 
 ## Data Model
 The livetiming API is a hierarchical API that progressively provides more information. The base of the API is https://livetiming.formula1.com/static (from here on, we will refer to that as root - '/' and reference the API layers as starting from '/'). Most layers provides an Index.json that we can learn about the available endpoints to dive deeper into. For example, /Index.json shows the current year (why it doesn't show every available year is not known to me). /{year}/Index.json provides a list of meetings (race or testing weekends) with their relevant sessions (FP1, Qualifying, etc.). Oddly, /{year}/{meeting} does not provide an Index.json file. /{year}/{meeting}/{session}/Index.json displays all available 'feeds' for a session. A 'feed' refers to a single collection of data submitted either as a .json file (a 'keyframe') or a .jsonStream (aka .jsonl) file (a 'stream'). 
@@ -156,3 +115,51 @@ sync_client = DirectClient(settings=settings)
 
 sync_client.get(year=2026)
 ```
+
+## Supported Feeds
+<details>
+<summary>Supported Feeds (32/32)</summary>
+
+| Feed | Keyframe (`.json`) | Stream (`.jsonStream`) |
+|------|:-------:|:-------------:|
+| TimingDataF1 | ✅ | ✅ |
+| TimingStats | ✅ | ✅ |
+| TimingAppData | ✅ | ✅ |
+| LapSeries | ✅ | ✅ |
+| TyreStintSeries | ✅ | ✅ |
+| DriverTracker | ✅ | ✅ |
+| OvertakeSeries | ✅ | ✅ |
+| PitStop | ✅ | ✅ |
+| PitStopSeries | ✅ | ✅ |
+| CurrentTyres | ✅ | ✅ |
+| TimingData | ✅ | ✅ |
+| LapCount | ✅ | ✅ |
+| TopThree | ✅ | ✅ |
+| CarData.z | ✅ | ✅ |
+| Position.z | ✅ | ✅ |
+| RaceControlMessages | ✅ | ✅ |
+| TrackStatus | ✅ | ✅ |
+| TlaRcm | ✅ | ✅ |
+| TeamRadio | ✅ | ✅ |
+| WeatherData | ✅ | ✅ |
+| WeatherDataSeries | ✅ | ✅ |
+| DriverList | ✅ | ✅ |
+| PitLaneTimeCollection | ✅ | ✅ |
+| ChampionshipPrediction | ✅ | ✅ |
+| DriverRaceInfo | ✅ | ✅ |
+| SessionInfo | ✅ | ✅ |
+| SessionData | ✅ | ✅ |
+| SessionStatus | ✅ | ✅ |
+| ArchiveStatus | ✅ | ✅ |
+| Heartbeat | ✅ | ✅ |
+| ExtrapolatedClock | ✅ | ✅ |
+| ContentStreams | ✅ | ✅ |
+| AudioStreams | ✅ | ✅ |
+
+</details>
+
+## Contributing
+pitwall is in early development and contributions are welcome — whether that's new feed implementations, tests, docs, or bug reports. See [CONTRIBUTING.md] for setup instructions and guidelines.
+
+## Disclaimer
+pitwall is an unofficial project and is not affiliated with Formula 1 companies. All F1-related trademarks are owned by Formula One Licensing B.V.

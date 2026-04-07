@@ -21,7 +21,7 @@ Or individually:
 
 ```bash
 ruff format
-ruff check (--fix (--unsafe-fixes))
+ruff check
 basedpyright
 uv run pytest
 ```

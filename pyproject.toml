@@ -1,7 +1,7 @@
 [project]
 name = "pitwall"
 version = "0.1.0"
-description = "Add your description here"
+description = "A thin, unopinionated wrapper of the F1 livetiming API. Provides typed values on a modern data stack."
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [

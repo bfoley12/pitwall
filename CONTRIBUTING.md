@@ -3,6 +3,7 @@
 Thanks for your interest in contributing! pitwall is in early development (`0.x`), so the API is still evolving - but that also means there's plenty of room to shape things.
 
 ## Setup
+Ensure that [uv](https://docs.astral.sh/uv/) and [just](https://just.systems/man/en/installation.html) are installed.
 
 ```bash
 git clone https://github.com/bfoley12/pitwall.git

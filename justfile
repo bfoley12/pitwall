@@ -15,4 +15,5 @@ test:
 
 setup:
     uv sync
-    pre-commit install
+    uv tool install ruff basedpyright 
+    uv run pre-commit install

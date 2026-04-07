@@ -87,5 +87,9 @@ reportUnusedCallResult = false
 reportUnknownVariableType = false
 reportIgnoreCommentWithoutRule = false
 
+[[tool.basedpyright.executionEnvironments]]
+root = "src/"
+reportUnknownMemberType = false
+
 [tool.marimo.runtime]
 output_max_bytes = 10_000_000

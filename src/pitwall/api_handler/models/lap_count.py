@@ -51,7 +51,7 @@ class LapCountStream(F1Stream):
                     total_laps = tl
 
         frame = cls._build_dataframe(raw)
-        current_lap = frame["lap"].max() if len(frame) > 0 else 0
+        current_lap: int = frame["lap"].max() if len(frame) > 0 else 0
 
         return {
             "data": frame,

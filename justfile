@@ -12,3 +12,7 @@ format-check:
 
 test:
     uv run pytest
+
+setup:
+    uv sync
+    pre-commit install

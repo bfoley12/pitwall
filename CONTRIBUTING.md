@@ -7,7 +7,7 @@ Thanks for your interest in contributing! pitwall is in early development (`0.x`
 ```bash
 git clone https://github.com/bfoley12/pitwall.git
 cd pitwall
-uv sync
+just setup
 ```
 
 ## Development

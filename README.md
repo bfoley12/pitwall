@@ -121,40 +121,40 @@ sync_client.get(year=2026)
 <summary>Supported Feeds (32/32)</summary>
 
 | Feed | Keyframe (`.json`) | Stream (`.jsonStream`) |
-|------|:-------:|:-------------:|
-| TimingDataF1 | ✅ | ✅ |
-| TimingStats | ✅ | ✅ |
-| TimingAppData | ✅ | ✅ |
-| LapSeries | ✅ | ✅ |
-| TyreStintSeries | ✅ | ✅ |
-| DriverTracker | ✅ | ✅ |
-| OvertakeSeries | ✅ | ✅ |
-| PitStop | ✅ | ✅ |
-| PitStopSeries | ✅ | ✅ |
-| CurrentTyres | ✅ | ✅ |
-| TimingData | ✅ | ✅ |
-| LapCount | ✅ | ✅ |
-| TopThree | ✅ | ✅ |
-| CarData.z | ✅ | ✅ |
-| Position.z | ✅ | ✅ |
-| RaceControlMessages | ✅ | ✅ |
-| TrackStatus | ✅ | ✅ |
-| TlaRcm | ✅ | ✅ |
-| TeamRadio | ✅ | ✅ |
-| WeatherData | ✅ | ✅ |
-| WeatherDataSeries | ✅ | ✅ |
-| DriverList | ✅ | ✅ |
-| PitLaneTimeCollection | ✅ | ✅ |
-| ChampionshipPrediction | ✅ | ✅ |
-| DriverRaceInfo | ✅ | ✅ |
-| SessionInfo | ✅ | ✅ |
-| SessionData | ✅ | ✅ |
-| SessionStatus | ✅ | ✅ |
-| ArchiveStatus | ✅ | ✅ |
-| Heartbeat | ✅ | ✅ |
-| ExtrapolatedClock | ✅ | ✅ |
-| ContentStreams | ✅ | ✅ |
-| AudioStreams | ✅ | ✅ |
+|------|:-----:|:-----:|
+| [TimingDataF1](src/pitwall/api_handler/models/timing_data_f1) | ✅ | ✅ |
+| [TimingStats](src/pitwall/api_handler/models/timing_stats) | ✅ | ✅ |
+| [TimingAppData](src/pitwall/api_handler/models/timing_app_data) | ✅ | ✅ |
+| [LapSeries](src/pitwall/api_handler/models/lap_series) | ✅ | ✅ |
+| [TyreStintSeries](src/pitwall/api_handler/models/tyre_stint_series) | ✅ | ✅ |
+| [DriverTracker](src/pitwall/api_handler/models/driver_tracker) | ✅ | ✅ |
+| [OvertakeSeries](src/pitwall/api_handler/models/overtake_series) | ✅ | ✅ |
+| [PitStop](src/pitwall/api_handler/models/pit_stop) | ✅ | ✅ |
+| [PitStopSeries](src/pitwall/api_handler/models/pit_stop_series) | ✅ | ✅ |
+| [CurrentTyres](src/pitwall/api_handler/models/current_tyres) | ✅ | ✅ |
+| [TimingData](src/pitwall/api_handler/models/timing_data) | ✅ | ✅ |
+| [LapCount](src/pitwall/api_handler/models/lap_count) | ✅ | ✅ |
+| [TopThree](src/pitwall/api_handler/models/top_three) | ✅ | ✅ |
+| [CarData.z](src/pitwall/api_handler/models/car_data) | ✅ | ✅ |
+| [Position.z](src/pitwall/api_handler/models/position) | ✅ | ✅ |
+| [RaceControlMessages](src/pitwall/api_handler/models/race_control_messages) | ✅ | ✅ |
+| [TrackStatus](src/pitwall/api_handler/models/track_status) | ✅ | ✅ |
+| [TlaRcm](src/pitwall/api_handler/models/tla_rcm) | ✅ | ✅ |
+| [TeamRadio](src/pitwall/api_handler/models/team_radio) | ✅ | ✅ |
+| [WeatherData](src/pitwall/api_handler/models/weather_data) | ✅ | ✅ |
+| [WeatherDataSeries](src/pitwall/api_handler/models/weather_data_series) | ✅ | ✅ |
+| [DriverList](src/pitwall/api_handler/models/driver_list) | ✅ | ✅ |
+| [PitLaneTimeCollection](src/pitwall/api_handler/models/pit_lane_time_collection) | ✅ | ✅ |
+| [ChampionshipPrediction](src/pitwall/api_handler/models/championship_prediction) | ✅ | ✅ |
+| [DriverRaceInfo](src/pitwall/api_handler/models/driver_race_info) | ✅ | ✅ |
+| [SessionInfo](src/pitwall/api_handler/models/session_info) | ✅ | ✅ |
+| [SessionData](src/pitwall/api_handler/models/session_data) | ✅ | ✅ |
+| [SessionStatus](src/pitwall/api_handler/models/session_status) | ✅ | ✅ |
+| [ArchiveStatus](src/pitwall/api_handler/models/archive_status) | ✅ | ✅ |
+| [Heartbeat](src/pitwall/api_handler/models/heartbeat) | ✅ | ✅ |
+| [ExtrapolatedClock](src/pitwall/api_handler/models/extrapolated_clock) | ✅ | ✅ |
+| [ContentStreams](src/pitwall/api_handler/models/content_streams) | ✅ | ✅ |
+| [AudioStreams](src/pitwall/api_handler/models/audio_streams) | ✅ | ✅ |
 
 </details>
 

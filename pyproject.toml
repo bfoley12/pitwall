@@ -1,5 +1,5 @@
 [project]
-name = "f1-stats"
+name = "pitwall"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -14,7 +14,6 @@ dependencies = [
     "pydantic>=2.12.5",
     "pydantic-settings>=2.13.1",
     "tenacity>=9.1.4",
-    "typer>=0.24.1",
 ]
 
 [dependency-groups]

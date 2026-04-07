@@ -119,10 +119,10 @@ sync_client.get(year=2026)
 ## Supported Feeds
 <details>
 <summary>Supported Feeds (32/32)</summary>
-
+https://github.com/bfoley12/pitwall/blob/main/src/pitwall/api_handler/models/timing_data_f1.py
 | Feed | Keyframe (`.json`) | Stream (`.jsonStream`) |
 |------|:-----:|:-----:|
-| [TimingDataF1](src/pitwall/api_handler/models/timing_data_f1.py) | ✅ | ✅ |
+| [TimingDataF1](src/pitwall/api_handler/models/timing_data.py) | ✅ | ✅ |
 | [TimingStats](src/pitwall/api_handler/models/timing_stats.py) | ✅ | ✅ |
 | [TimingAppData](src/pitwall/api_handler/models/timing_app_data.py) | ✅ | ✅ |
 | [LapSeries](src/pitwall/api_handler/models/lap_series.py) | ✅ | ✅ |
